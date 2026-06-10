@@ -24,6 +24,11 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy-pages.outputs.page_url }}
     steps:
       - id: app
         name: Generate App Token
@@ -52,11 +57,25 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app.outputs.token }}
         run: npm run report
 
+      - name: Prepare Pages Artifact
+        run: |
+          mkdir -p _site
+          cp overview.html _site/index.html
+
       - name: Commit Report
         uses: goeselt/scribe@2dde3d76f0a8c6de2974c223b6dd562756fa872e # v1.1.0
         with:
-          files: reports/overview.md
+          files: overview.html
           message: 'chore(report): update overview'
           git-user-name: ${{ vars.RELEASE_SIGNING_USER }}
           git-user-email: ${{ vars.RELEASE_SIGNING_EMAIL }}
           signing-key: ${{ secrets.RELEASE_SIGNING_KEY }}
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: _site
+
+      - id: deploy-pages
+        name: Deploy to Pages
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

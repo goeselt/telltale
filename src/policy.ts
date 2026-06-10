@@ -138,7 +138,9 @@ function evalRulesets(
     if (!active.has(rulesetName)) continue // already in missing list
     const present = new Set(snap.rulesets.named_rules[rulesetName] ?? [])
     const missingRules = rulePolicy.required_rules.filter((r) => !present.has(r))
-    if (missingRules.length > 0) violations.push({ ruleset: rulesetName, missing_rules: missingRules })
+    const forbiddenRules = (rulePolicy.forbidden_rules ?? []).filter((r) => present.has(r))
+    if (missingRules.length > 0 || forbiddenRules.length > 0)
+      violations.push({ ruleset: rulesetName, missing_rules: missingRules, forbidden_rules: forbiddenRules })
   }
 
   const failed = missing.length > 0 || violations.length > 0

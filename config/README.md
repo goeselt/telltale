@@ -37,9 +37,11 @@ profiles:
 | `repository_info`     | Description, size, license, languages, last commit, branch count -- [Get a repository](https://docs.github.com/en/rest/repos/repos#get-a-repository) + [List languages](https://docs.github.com/en/rest/repos/repos#list-repository-languages) + [List commits](https://docs.github.com/en/rest/commits/commits#list-commits) + [List branches](https://docs.github.com/en/rest/branches/branches#list-branches) |
 | `repository_settings` | Feature flags -- [Get a repository](https://docs.github.com/en/rest/repos/repos#get-a-repository)                                                                                                                                                                                                                                                                                                                |
 | `pull_requests`       | Open PRs -- [List pull requests](https://docs.github.com/en/rest/pulls/pulls#list-pull-requests)                                                                                                                                                                                                                                                                                                                 |
+| `issues`              | Open issues count (derived from repository metadata; does not count pull requests) -- [Get a repository](https://docs.github.com/en/rest/repos/repos#get-a-repository)                                                                                                                                                                                                                                           |
 | `latest_release`      | Latest release and tag/commit signatures -- [Get the latest release](https://docs.github.com/en/rest/releases/releases#get-the-latest-release)                                                                                                                                                                                                                                                                   |
 | `workflow_runs`       | Recent run conclusions -- [List workflow runs](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository)                                                                                                                                                                                                                                                                        |
 | `rulesets`            | Active branch rulesets -- [Get all repository rulesets](https://docs.github.com/en/rest/repos/rules#get-all-repository-rulesets)                                                                                                                                                                                                                                                                                 |
+| `security_findings`   | Open code scanning alerts -- [List code scanning alerts](https://docs.github.com/en/rest/code-scanning/code-scanning#list-code-scanning-alerts-for-a-repository). Returns `not_configured` (404/422) or `not_applicable` (missing `security_events` scope).                                                                                                                                                      |
 
 ---
 
@@ -94,6 +96,7 @@ Checks that named branch rulesets exist and contain the required rule types.
 
 - `required_names` -- rulesets that must exist (matched by name, case-sensitive).
 - `ruleset_rules.<name>.required_rules` -- rule types that must be present in that ruleset.
+- `ruleset_rules.<name>.forbidden_rules` -- rule types that must **not** be present in that ruleset.
 
 Rule type values come from the `type` field in
 [GET /repos/{owner}/{repo}/rulesets/{ruleset_id}](https://docs.github.com/en/rest/repos/rules#get-a-repository-ruleset).
@@ -124,6 +127,8 @@ rules:
           - required_signatures
           - pull_request
           - required_status_checks
+        forbidden_rules:
+          - required_linear_history
 ```
 
 ---

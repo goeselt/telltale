@@ -81,6 +81,7 @@ export interface RulesetsData {
 export interface RulesetViolation {
   ruleset: string
   missing_rules: string[]
+  forbidden_rules: string[]
 }
 
 export interface RepositoryInfo {

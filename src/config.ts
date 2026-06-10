@@ -48,6 +48,7 @@ export interface ReleasePolicy {
 
 export interface RulesetRulesPolicy {
   required_rules: string[]
+  forbidden_rules?: string[]
 }
 
 export interface RulesetsPolicy {
@@ -104,7 +105,7 @@ function parseGroups(raw: unknown): RepositoryGroup[] {
   const r = raw as Record<string, unknown>
   if (!Array.isArray(r['groups'])) throw new Error('repositories.yml: groups must be an array')
 
-  return (r['groups'] as unknown[]).map((g, i) => {
+  return (r['groups'] as unknown[]).flatMap((g, i) => {
     if (!isObject(g)) throw new Error(`repositories.yml: groups[${i}] must be an object`)
     const grp = g as Record<string, unknown>
 
@@ -114,7 +115,8 @@ function parseGroups(raw: unknown): RepositoryGroup[] {
     const hasOwner = isObject(grp['owner'])
     const hasRepos = Array.isArray(grp['repositories']) && (grp['repositories'] as unknown[]).length > 0
     if (!hasOwner && !hasRepos) {
-      throw new Error(`repositories.yml: group "${grp['name']}" must have either owner or repositories`)
+      process.stderr.write(`telltale: repositories.yml: group "${grp['name']}" has no owner or repositories -- skipping\n`)
+      return []
     }
 
     let owner: GroupOwner | undefined
@@ -129,16 +131,18 @@ function parseGroups(raw: unknown): RepositoryGroup[] {
       owner = { type: o['type'] as OwnerType, name: o['name'] }
     }
 
-    return {
-      name: grp['name'],
-      profile: grp['profile'],
-      owner,
-      repositories: Array.isArray(grp['repositories']) ? (grp['repositories'] as string[]) : undefined,
-      include_archived: grp['include_archived'] === true,
-      include_forks: grp['include_forks'] === true,
-      expose_private_names: grp['expose_private_names'] === true,
-      exclude: Array.isArray(grp['exclude']) ? (grp['exclude'] as string[]) : [],
-    }
+    return [
+      {
+        name: grp['name'],
+        profile: grp['profile'],
+        owner,
+        repositories: Array.isArray(grp['repositories']) ? (grp['repositories'] as string[]) : undefined,
+        include_archived: grp['include_archived'] === true,
+        include_forks: grp['include_forks'] === true,
+        expose_private_names: grp['expose_private_names'] === true,
+        exclude: Array.isArray(grp['exclude']) ? (grp['exclude'] as string[]) : [],
+      },
+    ]
   })
 }
 
