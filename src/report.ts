@@ -114,9 +114,6 @@ dl.meta.single>dt:nth-child(even){background:#f9fafb}
 
 /* violations */
 .violations{margin-top:14px}
-
-/* permission gaps */
-.gaps{margin-top:32px}
 `
 
 // --- public API ---
@@ -126,7 +123,6 @@ export function renderReport(snapshots: RepositorySnapshot[], generatedAt: strin
   parts.push(renderCardGrid(snapshots))
   parts.push('<div class="details">')
   for (const snap of snapshots) parts.push(renderDetail(snap))
-  parts.push('</div>')
 
   const gapRows = snapshots.flatMap((s) =>
     Object.entries(s.probes).map(
@@ -134,11 +130,15 @@ export function renderReport(snapshots: RepositorySnapshot[], generatedAt: strin
     ),
   )
   if (gapRows.length > 0) {
-    parts.push('<div class="gaps"><h2 class="section-title">Permission Gaps</h2>')
+    parts.push('<article>')
+    parts.push(`<h2 class="repo-heading"><span>${ICON_WARNING}</span><span>Permission Gaps</span></h2>`)
     parts.push('<dl class="meta">')
     parts.push(...gapRows)
-    parts.push('</dl></div>')
+    parts.push('</dl>')
+    parts.push('</article>')
   }
+
+  parts.push('</div>')
 
   return `<!DOCTYPE html>
 <html lang="en">
