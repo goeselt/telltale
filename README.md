@@ -97,11 +97,11 @@ See [`config/README.md`](config/README.md) for the full configuration reference.
 
 ## CLI Options
 
-| Flag                 | Env var               | Default        | Description                                                |
-| -------------------- | --------------------- | -------------- | ---------------------------------------------------------- |
-| `--out <path>`       | `TELLTALE_OUTPUT`     | `overview.html`| Output path; use `-` for stdout                            |
-| `--config-dir <dir>` | `TELLTALE_CONFIG_DIR` | `config/`      | Directory containing `repositories.yml` and `profiles.yml` |
-| `--fixtures <dir>`   | --                    | --             | Use fixture files instead of live GitHub API calls         |
+| Flag                 | Env var               | Default         | Description                                                |
+| -------------------- | --------------------- | --------------- | ---------------------------------------------------------- |
+| `--out <path>`       | `TELLTALE_OUTPUT`     | `overview.html` | Output path; use `-` for stdout                            |
+| `--config-dir <dir>` | `TELLTALE_CONFIG_DIR` | `config/`       | Directory containing `repositories.yml` and `profiles.yml` |
+| `--fixtures <dir>`   | --                    | --              | Use fixture files instead of live GitHub API calls         |
 
 ## Scheduled Report Workflow
 
@@ -117,8 +117,8 @@ deploys it to GitHub Pages. It requires:
 
 Enable Pages in the repository settings once:
 
-1. **Settings → Pages → Source**: select **GitHub Actions**
-2. Trigger the workflow manually (`Actions → Report → Run workflow`) for the first deployment
+1. **Settings --> Pages --> Source**: select **GitHub Actions**
+2. Trigger the workflow manually (`Actions --> Report --> Run workflow`) for the first deployment
 
 The page will be available at `https://<owner>.github.io/<repo>/` after the first successful run.
 

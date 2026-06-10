@@ -149,7 +149,7 @@ test('renderDetail: shows PR count', () => {
   })
   const out = renderDetail(snap)
   assert.match(out, /3 open PRs/)
-  assert.match(out, /✅/)
+  assert.match(out, /\u2705/)
 })
 
 test('renderDetail: no open PRs shows ok', () => {
@@ -249,7 +249,7 @@ test('renderDetail: security findings warning shown', () => {
   })
   const out = renderDetail(snap)
   assert.match(out, /Security Findings/)
-  assert.match(out, /⚠️/)
+  assert.match(out, /\u26A0\uFE0F/)
 })
 
 test('renderDetail: security findings not configured shown as informational', () => {
@@ -308,5 +308,5 @@ test('renderDetail: failed workflow shows run name', () => {
   })
   const out = renderDetail(snap)
   assert.match(out, /Release/)
-  assert.match(out, /❌/)
+  assert.match(out, /\u274C/)
 })

@@ -1,11 +1,21 @@
 import type { RepositorySnapshot, ProbeStatus, WorkflowRun } from './types.ts'
 
+const ICON_OK = '\u2705'
+const ICON_WARNING = '\u26A0\uFE0F'
+const ICON_FAILED = '\u274C'
+const ICON_UNKNOWN = '\u2754'
+const ICON_ALERT = '\u{1F6A8}'
+const ICON_LOCK = '\u{1F512}'
+const ICON_TIMER = '\u23F1\uFE0F'
+const ICON_PENDING = '\u23F3'
+const ICON_QUESTION = '\u2753'
+
 const STATUS_ICON: Record<ProbeStatus, string> = {
-  ok: '✅',
-  warning: '⚠️',
-  failed: '❌',
-  unknown: '❔',
-  not_applicable: '—',
+  ok: ICON_OK,
+  warning: ICON_WARNING,
+  failed: ICON_FAILED,
+  unknown: ICON_UNKNOWN,
+  not_applicable: '--',
 }
 
 const CSS = `
@@ -120,7 +130,7 @@ export function renderReport(snapshots: RepositorySnapshot[], generatedAt: strin
 
   const gapRows = snapshots.flatMap((s) =>
     Object.entries(s.probes).map(
-      ([k, p]) => `<dt>${esc(displayName(s))} · ${esc(k)}</dt><dd>${esc(p.reason)}</dd>`,
+      ([k, p]) => `<dt>${esc(displayName(s))} &middot; ${esc(k)}</dt><dd>${esc(p.reason)}</dd>`,
     ),
   )
   if (gapRows.length > 0) {
@@ -323,8 +333,7 @@ function infoBlock(snap: RepositorySnapshot): string {
   if (snap.issues !== undefined) items.push(['Open Issues', String(snap.issues.open_count)])
 
   const langEntries = Object.entries(info.languages).sort((a, b) => b[1] - a[1])
-  if (langEntries.length > 0)
-    items.push(['Languages', langEntries.map(([l, p]) => `${esc(l)} ${p}%`).join(', ')])
+  if (langEntries.length > 0) items.push(['Languages', langEntries.map(([l, p]) => `${esc(l)} ${p}%`).join(', ')])
 
   const dtDds = items.map(([dt, dd]) => `<dt>${esc(dt)}</dt><dd>${dd}</dd>`).join('\n')
   parts.push(`<dl class="meta">\n${dtDds}\n</dl>`)
@@ -356,7 +365,9 @@ function releaseMetaItem(snap: RepositorySnapshot): [string, string] | null {
   return ['Release', parts.join(' &middot; ')]
 }
 
-function checkRows(snap: RepositorySnapshot): Array<{ name: string; status: ProbeStatus; detail: string; icon?: string }> {
+function checkRows(
+  snap: RepositorySnapshot,
+): Array<{ name: string; status: ProbeStatus; detail: string; icon?: string }> {
   const rows: Array<{ name: string; status: ProbeStatus; detail: string; icon?: string }> = []
 
   function add(name: string, status: ProbeStatus, detail: string, icon?: string): void {
@@ -373,7 +384,11 @@ function checkRows(snap: RepositorySnapshot): Array<{ name: string; status: Prob
 
   if (snap.pull_requests !== undefined) {
     const count = snap.pull_requests.open_count
-    add('Pull Requests', snap.policy.pull_requests, count === 0 ? 'No open PRs' : `${count} open PR${count > 1 ? 's' : ''}`)
+    add(
+      'Pull Requests',
+      snap.policy.pull_requests,
+      count === 0 ? 'No open PRs' : `${count} open PR${count > 1 ? 's' : ''}`,
+    )
   } else if ('pull_requests' in snap.probes) {
     add('Pull Requests', 'unknown', 'unreadable')
   }
@@ -418,7 +433,10 @@ function checkRows(snap: RepositorySnapshot): Array<{ name: string; status: Prob
     } else if (snap.policy.rulesets_violations.length === 0) {
       detail = 'all checks passed'
     } else {
-      const n = snap.policy.rulesets_violations.reduce((s, v) => s + v.missing_rules.length + v.forbidden_rules.length, 0)
+      const n = snap.policy.rulesets_violations.reduce(
+        (s, v) => s + v.missing_rules.length + v.forbidden_rules.length,
+        0,
+      )
       detail = `${n} finding${n !== 1 ? 's' : ''}`
     }
     add('Rulesets', snap.policy.rulesets, detail)
@@ -434,7 +452,12 @@ function checkRows(snap: RepositorySnapshot): Array<{ name: string; status: Prob
         : sf.open_count === 0
           ? 'no open alerts'
           : `${sf.open_count} open alert${sf.open_count !== 1 ? 's' : ''}`
-    add('Security Findings', snap.policy.security_findings, detail, sf.status === 'not_configured' ? '⚠️' : undefined)
+    add(
+      'Security Findings',
+      snap.policy.security_findings,
+      detail,
+      sf.status === 'not_configured' ? ICON_WARNING : undefined,
+    )
   } else if ('security_findings' in snap.probes) {
     add('Security Findings', 'unknown', 'probe unavailable')
   }
@@ -464,7 +487,9 @@ function workflowSection(runs: WorkflowRun[], recentCount: number): string {
       const icon = conclusionIcon(r.conclusion)
       const cls = conclusionClass(r.conclusion)
       const dur = fmtDur(r.run_started_at ?? r.created_at, r.updated_at)
-      parts.push(`<a href="${r.html_url}" class="wf-cell ${cls}" title="${esc(fmtRunDate(r.created_at))}">${icon} ${esc(dur)}</a>`)
+      parts.push(
+        `<a href="${r.html_url}" class="wf-cell ${cls}" title="${esc(fmtRunDate(r.created_at))}">${icon} ${esc(dur)}</a>`,
+      )
     }
     parts.push('</div>')
   }
@@ -489,21 +514,18 @@ function releaseLineDetail(snap: RepositorySnapshot): string {
   const canLink = canExposeRepoName(snap)
   const parts: string[] = []
 
-  if (r.in_default_branch === false) parts.push('🚨')
+  if (r.in_default_branch === false) parts.push(ICON_ALERT)
 
   if (r.tag_sha) {
     const short = r.tag_sha.slice(0, 7)
-    const sha = canLink
-      ? `<a href="https://github.com/${snap.full_name}/commit/${r.tag_sha}">${short}</a>`
-      : short
+    const sha = canLink ? `<a href="https://github.com/${snap.full_name}/commit/${r.tag_sha}">${short}</a>` : short
     const sign = signIcon(r.commit_verified)
     parts.push(sign ? `${sha} ${sign}` : sha)
     parts.push('@')
   }
 
   const tag = r.tag_name ?? '?'
-  const tagLink =
-    canLink && r.html_url ? `<a href="${r.html_url}">${esc(tag)}</a>` : esc(tag)
+  const tagLink = canLink && r.html_url ? `<a href="${r.html_url}">${esc(tag)}</a>` : esc(tag)
   const tagSign = signIcon(r.tag_verified)
   parts.push(tagSign ? `${tagLink} ${tagSign}` : tagLink)
 
@@ -551,7 +573,7 @@ function formatSize(kb: number): string {
 }
 
 function signIcon(verified: boolean | undefined): string {
-  return verified === true ? '🔒' : ''
+  return verified === true ? ICON_LOCK : ''
 }
 
 const DEPENDABOT_RUN = /- Update #\d+$/
@@ -572,13 +594,13 @@ function fmtDur(startIso: string, endIso: string): string {
 }
 
 function conclusionIcon(conclusion: string | null): string {
-  if (conclusion === 'success') return '✅'
-  if (conclusion === 'failure') return '❌'
-  if (conclusion === 'timed_out') return '⏱️'
-  if (conclusion === 'action_required') return '⚠️'
-  if (conclusion === 'cancelled') return '—'
-  if (conclusion === null) return '⏳'
-  return '❓'
+  if (conclusion === 'success') return ICON_OK
+  if (conclusion === 'failure') return ICON_FAILED
+  if (conclusion === 'timed_out') return ICON_TIMER
+  if (conclusion === 'action_required') return ICON_WARNING
+  if (conclusion === 'cancelled') return '--'
+  if (conclusion === null) return ICON_PENDING
+  return ICON_QUESTION
 }
 
 function esc(s: string): string {

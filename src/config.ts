@@ -115,7 +115,9 @@ function parseGroups(raw: unknown): RepositoryGroup[] {
     const hasOwner = isObject(grp['owner'])
     const hasRepos = Array.isArray(grp['repositories']) && (grp['repositories'] as unknown[]).length > 0
     if (!hasOwner && !hasRepos) {
-      process.stderr.write(`telltale: repositories.yml: group "${grp['name']}" has no owner or repositories -- skipping\n`)
+      process.stderr.write(
+        `telltale: repositories.yml: group "${grp['name']}" has no owner or repositories -- skipping\n`,
+      )
       return []
     }
 
