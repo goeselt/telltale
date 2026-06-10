@@ -131,7 +131,7 @@ export function renderReport(snapshots: RepositorySnapshot[], generatedAt: strin
   )
   if (gapRows.length > 0) {
     parts.push('<article>')
-    parts.push('<h2 class="repo-heading"><span>⚠️</span><span>Permission Gaps</span></h2>')
+    parts.push(`<h2 class="repo-heading"><span>${ICON_WARNING}</span><span>Permission Gaps</span></h2>`)
     parts.push('<dl class="meta">')
     parts.push(...gapRows)
     parts.push('</dl>')
