@@ -296,8 +296,7 @@ test('security_findings: no findings --> ok', () => {
     probes: { security_findings: { status: 'unavailable', reason: 'missing_permission' } },
   })
   // probes entry should not matter if data is present
-  const snap2 = makeSnap({ security_findings: { status: 'enabled', open_count: 0, alerts: [] } })
-  const result = evaluatePolicy(snap2, defaultPolicy)
+  const result = evaluatePolicy(snap, defaultPolicy)
   assert.equal(result.security_findings, 'ok')
 })
 

@@ -11,6 +11,7 @@ groups:
       - goeselt/scribe
       - goeselt/serial
       - goeselt/shipit
+      - goeselt/telltale
       - goeselt/withcraft
     expose_private_names: false
 

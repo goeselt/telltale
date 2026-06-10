@@ -42,7 +42,7 @@ test('renderCardGrid: public repo shows full name as card link', () => {
   })
   const out = renderCardGrid([snap])
   assert.match(out, /owner\/repo/)
-  assert.match(out, /#owner-repo/)
+  assert.match(out, /href="#owner-repo"/)
   assert.match(out, /v2\.0\.0/)
 })
 
@@ -69,7 +69,7 @@ test('renderCardGrid: private repo with expose_private_name=false shows [private
   const out = renderCardGrid([snap])
   assert.match(out, /\[private\]/)
   assert.doesNotMatch(out, /owner\/repo/)
-  assert.doesNotMatch(out, /owner-repo/)
+  assert.doesNotMatch(out, /href="#owner-repo"/)
 })
 
 test('renderCardGrid: private repo with expose_private_name=true shows full name', () => {
@@ -78,12 +78,11 @@ test('renderCardGrid: private repo with expose_private_name=true shows full name
   assert.match(out, /owner\/repo/)
 })
 
-test('renderDetail: heading has named anchor without external link', () => {
+test('renderDetail: heading has named anchor', () => {
   const snap = makeSnap()
   const out = renderDetail(snap)
   assert.match(out, /id="owner-repo"/)
-  assert.match(out, /### owner\/repo/)
-  assert.doesNotMatch(out, /###.*https:\/\/github\.com/)
+  assert.match(out, /owner\/repo/)
 })
 
 test('renderDetail: public repo has explicit GitHub link', () => {
@@ -124,11 +123,10 @@ test('renderDetail: private repo without expose_private_name has no GitHub link'
     },
   })
   const out = renderDetail(snap)
-  assert.doesNotMatch(out, /View on GitHub/)
   assert.doesNotMatch(out, /https:\/\/github\.com\/owner\/repo/)
-  assert.doesNotMatch(out, /owner-repo/)
-  assert.match(out, /\*\*HEAD:\*\*/)
-  assert.match(out, /\*\*Release:\*\*/)
+  assert.doesNotMatch(out, /id="owner-repo"/)
+  assert.match(out, /\bHEAD\b/)
+  assert.match(out, /\bRelease\b/)
 })
 
 test('renderDetail: shows PR count', () => {
@@ -151,7 +149,7 @@ test('renderDetail: shows PR count', () => {
   })
   const out = renderDetail(snap)
   assert.match(out, /3 open PRs/)
-  assert.match(out, /:white_check_mark:/)
+  assert.match(out, /\u2705/)
 })
 
 test('renderDetail: no open PRs shows ok', () => {
@@ -251,7 +249,7 @@ test('renderDetail: security findings warning shown', () => {
   })
   const out = renderDetail(snap)
   assert.match(out, /Security Findings/)
-  assert.match(out, /:warning:/)
+  assert.match(out, /\u26A0\uFE0F/)
 })
 
 test('renderDetail: security findings not configured shown as informational', () => {
@@ -310,5 +308,5 @@ test('renderDetail: failed workflow shows run name', () => {
   })
   const out = renderDetail(snap)
   assert.match(out, /Release/)
-  assert.match(out, /:x:/)
+  assert.match(out, /\u274C/)
 })

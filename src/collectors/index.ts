@@ -151,7 +151,9 @@ export async function collectSnapshot(opts: CollectOptions): Promise<RepositoryS
       }
     }
     if (p.security_findings === 'warning' && snapshot.security_findings) {
-      issues.push(`${snapshot.security_findings.open_count} open security alert${snapshot.security_findings.open_count !== 1 ? 's' : ''}`)
+      issues.push(
+        `${snapshot.security_findings.open_count} open security alert${snapshot.security_findings.open_count !== 1 ? 's' : ''}`,
+      )
     }
     log(`repo=${fullName} overall=${p.overall}${issues.length > 0 ? `: ${issues.join('; ')}` : ''}`)
   }

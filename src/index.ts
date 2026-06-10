@@ -10,7 +10,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2)
 
   const fixturesDir = flag(args, '--fixtures')
-  const out = flag(args, '--out') ?? process.env['TELLTALE_OUTPUT'] ?? 'reports/overview.md'
+  const out = flag(args, '--out') ?? process.env['TELLTALE_OUTPUT'] ?? 'overview.html'
   const configDir = flag(args, '--config-dir') ?? process.env['TELLTALE_CONFIG_DIR'] ?? 'config/'
 
   const token = process.env['GITHUB_TOKEN']

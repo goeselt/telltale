@@ -45,6 +45,8 @@ profiles:
               - required_signatures
               - pull_request
               - required_status_checks
+            forbidden_rules:
+              - merge_queue
 
   release-watch:
     collectors:
