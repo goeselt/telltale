@@ -1,0 +1,10 @@
+{
+  "id": 1001,
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    { "type": "required_signatures" },
+    { "type": "pull_request" },
+    { "type": "required_status_checks" }
+  ]
+}

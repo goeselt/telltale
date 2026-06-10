@@ -1,0 +1,62 @@
+---
+name: Report
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  report:
+    name: Generate Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - id: app
+        name: Generate App Token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 1
+          token: ${{ steps.app.outputs.token }}
+
+      - name: Set Up Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Report
+        env:
+          GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+        run: npm run report
+
+      - name: Commit Report
+        uses: goeselt/scribe@2dde3d76f0a8c6de2974c223b6dd562756fa872e # v1.1.0
+        with:
+          files: reports/overview.md
+          message: 'chore(report): update overview'
+          git-user-name: ${{ vars.RELEASE_SIGNING_USER }}
+          git-user-email: ${{ vars.RELEASE_SIGNING_EMAIL }}
+          signing-key: ${{ secrets.RELEASE_SIGNING_KEY }}

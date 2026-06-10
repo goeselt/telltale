@@ -1,0 +1,23 @@
+---
+groups:
+  - name: personal
+    profile: personal-repositories
+    repositories:
+      - goeselt/bumpkin
+      - goeselt/culprit
+      - goeselt/octopass
+      - goeselt/pedant
+      - goeselt/plainify
+      - goeselt/scribe
+      - goeselt/serial
+      - goeselt/shipit
+      - goeselt/withcraft
+    expose_private_names: false
+
+  - name: external
+    profile: release-watch
+    repositories:
+      - actions/checkout
+      - actions/setup-go
+      - actions/setup-node
+    expose_private_names: false

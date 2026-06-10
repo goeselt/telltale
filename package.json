@@ -1,0 +1,22 @@
+{
+  "name": "telltale",
+  "version": "0.1.0",
+  "description": "Repository health and settings reporter",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "report": "node --env-file-if-exists .env --import tsx src/index.ts",
+    "report:fixtures": "node --env-file-if-exists .env --import tsx src/index.ts --fixtures fixtures/",
+    "test": "node --import tsx --test src/*.test.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

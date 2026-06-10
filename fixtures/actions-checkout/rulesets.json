@@ -1,0 +1,8 @@
+[
+  {
+    "id": 901234,
+    "name": "Require PRs on main",
+    "target": "branch",
+    "enforcement": "active"
+  }
+]

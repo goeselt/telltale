@@ -1,0 +1,62 @@
+---
+profiles:
+  personal-repositories:
+    collectors:
+      repository_info: true
+      repository_settings: true
+      pull_requests: true
+      issues: true
+      latest_release: true
+      workflow_runs: true
+      rulesets: true
+      security_findings: true
+    rules:
+      repository:
+        allowed_default_branches:
+          - main
+      settings:
+        required:
+          delete_branch_on_merge: true
+          allow_squash_merge: true
+          allow_auto_merge: true
+          has_issues: true
+        forbidden:
+          has_wiki: true
+          has_projects: true
+          allow_merge_commit: true
+          allow_rebase_merge: true
+      workflow_health:
+        recent_runs: 5
+        fail_on_conclusions:
+          - failure
+          - timed_out
+          - action_required
+      latest_release:
+        required: false
+        require_in_default_branch: true
+      rulesets:
+        required_names:
+          - main
+        ruleset_rules:
+          main:
+            required_rules:
+              - deletion
+              - non_fast_forward
+              - required_signatures
+              - pull_request
+              - required_status_checks
+
+  release-watch:
+    collectors:
+      repository_info: true
+      repository_settings: false
+      pull_requests: true
+      issues: false
+      latest_release: true
+      workflow_runs: false
+      rulesets: false
+      security_findings: false
+    rules:
+      latest_release:
+        required: true
+        require_in_default_branch: true
