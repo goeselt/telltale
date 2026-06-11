@@ -1,0 +1,16 @@
+[
+  {
+    "number": 7,
+    "title": "Bump tj-actions/changed-files from 44 to 46 - Update #7",
+    "draft": false,
+    "html_url": "https://github.com/goeselt/settings-fail/pull/7",
+    "author_login": "dependabot[bot]"
+  },
+  {
+    "number": 6,
+    "title": "feat: add retry logic for flaky network calls",
+    "draft": false,
+    "html_url": "https://github.com/goeselt/settings-fail/pull/6",
+    "author_login": "goeselt"
+  }
+]

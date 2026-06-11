@@ -32,6 +32,13 @@ export async function collectSnapshot(opts: CollectOptions): Promise<RepositoryS
     allow_squash_merge: repoData.allow_squash_merge,
     allow_merge_commit: repoData.allow_merge_commit,
     allow_rebase_merge: repoData.allow_rebase_merge,
+    allow_all_pr_creation: repoData.pull_request_creation_policy === 'all',
+    secret_scanning_enabled: repoData.secret_scanning_enabled,
+    secret_scanning_push_protection_enabled: repoData.secret_scanning_push_protection_enabled,
+    web_commit_signoff_required: repoData.web_commit_signoff_required,
+    allow_forking: repoData.allow_forking,
+    allow_update_branch: repoData.allow_update_branch,
+    dependabot_security_updates_enabled: repoData.dependabot_security_updates_enabled,
   }
 
   const c = profile.collectors
@@ -145,10 +152,23 @@ export async function collectSnapshot(opts: CollectOptions): Promise<RepositoryS
     if (snapshot.pull_requests && snapshot.pull_requests.open_count > 0) {
       issues.push(`${snapshot.pull_requests.open_count} open PRs`)
     }
-    if (p.rulesets === 'failed') {
+    if (p.rulesets !== 'not_applicable' && p.rulesets !== 'ok') {
       if (p.rulesets_missing.length > 0) issues.push(`rulesets missing: ${p.rulesets_missing.join(', ')}`)
+      if (p.rulesets_evaluate_mode.length > 0)
+        issues.push(`rulesets in evaluate mode: ${p.rulesets_evaluate_mode.join(', ')}`)
       if (p.rulesets_violations.length > 0) {
-        const detail = p.rulesets_violations.map((v) => `${v.ruleset}: ${v.missing_rules.join(', ')}`).join('; ')
+        const detail = p.rulesets_violations
+          .map((v) => {
+            const parts: string[] = []
+            if (v.missing_rules.length > 0) parts.push(`missing: ${v.missing_rules.join(', ')}`)
+            if (v.forbidden_rules.length > 0) parts.push(`forbidden: ${v.forbidden_rules.join(', ')}`)
+            if (v.parameter_violations.length > 0)
+              parts.push(
+                `params: ${v.parameter_violations.map((pv) => `${pv.rule}.${pv.param}(got ${pv.got})`).join(', ')}`,
+              )
+            return `${v.ruleset}: ${parts.join('; ')}`
+          })
+          .join('; ')
         issues.push(`ruleset violations: ${detail}`)
       }
     }

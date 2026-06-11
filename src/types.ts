@@ -9,6 +9,13 @@ export interface RepositorySettings {
   allow_squash_merge: boolean | undefined
   allow_merge_commit: boolean | undefined
   allow_rebase_merge: boolean | undefined
+  allow_all_pr_creation: boolean
+  secret_scanning_enabled: boolean
+  secret_scanning_push_protection_enabled: boolean
+  web_commit_signoff_required: boolean
+  allow_forking: boolean
+  allow_update_branch: boolean
+  dependabot_security_updates_enabled: boolean
 }
 
 export interface PullRequest {
@@ -78,14 +85,26 @@ export interface SecurityFindingsData {
 export interface RulesetsData {
   status: ProbeStatus
   active_branch_ruleset_names: string[]
+  // Rulesets in evaluate (dry-run) mode, keyed by ruleset name.
+  evaluate_branch_ruleset_names: string[]
   // Rule types present in each named ruleset, keyed by ruleset name.
   named_rules: Record<string, string[]>
+  // Rule parameters for each rule type within each named ruleset.
+  named_rule_parameters: Record<string, Record<string, Record<string, unknown>>>
+}
+
+export interface RulesetParameterViolation {
+  rule: string
+  param: string
+  expected: unknown
+  got: unknown
 }
 
 export interface RulesetViolation {
   ruleset: string
   missing_rules: string[]
   forbidden_rules: string[]
+  parameter_violations: RulesetParameterViolation[]
 }
 
 export interface RepositoryInfo {
@@ -121,6 +140,7 @@ export interface PolicyResult {
   rulesets: ProbeStatus
   rulesets_missing: string[]
   rulesets_violations: RulesetViolation[]
+  rulesets_evaluate_mode: string[]
   security_findings: ProbeStatus
   overall: ProbeStatus
 }

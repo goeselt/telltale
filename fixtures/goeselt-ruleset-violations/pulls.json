@@ -1,0 +1,9 @@
+[
+  {
+    "number": 12,
+    "title": "Bump golang.org/x/net from 0.25.0 to 0.26.0 - Update #12",
+    "draft": false,
+    "html_url": "https://github.com/goeselt/ruleset-violations/pull/12",
+    "author_login": "dependabot[bot]"
+  }
+]

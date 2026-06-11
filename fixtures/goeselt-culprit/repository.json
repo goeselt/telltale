@@ -13,5 +13,11 @@
   "delete_branch_on_merge": true,
   "allow_squash_merge": true,
   "allow_merge_commit": false,
-  "allow_rebase_merge": false
+  "allow_rebase_merge": false,
+  "secret_scanning_enabled": true,
+  "secret_scanning_push_protection_enabled": false,
+  "dependabot_security_updates_enabled": false,
+  "web_commit_signoff_required": false,
+  "allow_forking": false,
+  "allow_update_branch": false
 }

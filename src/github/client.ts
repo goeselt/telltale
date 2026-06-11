@@ -16,6 +16,13 @@ export interface GitHubRepository {
   allow_squash_merge: boolean | undefined
   allow_merge_commit: boolean | undefined
   allow_rebase_merge: boolean | undefined
+  pull_request_creation_policy: string | undefined
+  secret_scanning_enabled: boolean
+  secret_scanning_push_protection_enabled: boolean
+  web_commit_signoff_required: boolean
+  allow_forking: boolean
+  allow_update_branch: boolean
+  dependabot_security_updates_enabled: boolean
 }
 
 export interface GitHubCodeScanningAlert {
@@ -65,7 +72,7 @@ export interface GitHubRuleset {
 
 export interface GitHubRulesetDetail {
   id: number
-  rules: Array<{ type: string }>
+  rules: Array<{ type: string; parameters?: Record<string, unknown> }>
 }
 
 export interface TagResolution {

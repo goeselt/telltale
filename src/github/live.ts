@@ -92,6 +92,10 @@ function nextLink(link: string): string | null {
 
 function mapRepo(d: Record<string, unknown>): GitHubRepository {
   const lic = d.license as Record<string, unknown> | null | undefined
+  const sec = d.security_and_analysis as Record<string, unknown> | undefined
+  const secretScan = sec?.secret_scanning as Record<string, unknown> | undefined
+  const secretScanPush = sec?.secret_scanning_push_protection as Record<string, unknown> | undefined
+  const depSec = sec?.dependabot_security_updates as Record<string, unknown> | undefined
   return {
     full_name: d.full_name as string,
     default_branch: (d.default_branch as string | undefined) ?? 'main',
@@ -110,6 +114,13 @@ function mapRepo(d: Record<string, unknown>): GitHubRepository {
     allow_squash_merge: d.allow_squash_merge as boolean | undefined,
     allow_merge_commit: d.allow_merge_commit as boolean | undefined,
     allow_rebase_merge: d.allow_rebase_merge as boolean | undefined,
+    pull_request_creation_policy: d.pull_request_creation_policy as string | undefined,
+    secret_scanning_enabled: secretScan?.status === 'enabled',
+    secret_scanning_push_protection_enabled: secretScanPush?.status === 'enabled',
+    web_commit_signoff_required: (d.web_commit_signoff_required as boolean | undefined) ?? false,
+    allow_forking: (d.allow_forking as boolean | undefined) ?? true,
+    allow_update_branch: (d.allow_update_branch as boolean | undefined) ?? false,
+    dependabot_security_updates_enabled: depSec?.status === 'enabled',
   }
 }
 
@@ -261,7 +272,13 @@ export class LiveClient implements GitHubClient {
     try {
       const d = await get<Record<string, unknown>>(`/repos/${owner}/${repo}/rulesets/${id}`, this.token)
       const rules = (d.rules as Array<Record<string, unknown>> | undefined) ?? []
-      return { id: d.id as number, rules: rules.map((r) => ({ type: r.type as string })) }
+      return {
+        id: d.id as number,
+        rules: rules.map((r) => ({
+          type: r.type as string,
+          parameters: r.parameters as Record<string, unknown> | undefined,
+        })),
+      }
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) return null
       throw err

@@ -1,0 +1,23 @@
+[
+  {
+    "number": 31,
+    "title": "Bump github.com/aws/aws-sdk-go-v2 from 1.26.0 to 1.27.0 - Update #31",
+    "draft": false,
+    "html_url": "https://github.com/goeselt/security-alerts/pull/31",
+    "author_login": "dependabot[bot]"
+  },
+  {
+    "number": 30,
+    "title": "Bump golang.org/x/crypto from 0.21.0 to 0.22.0 - Update #30",
+    "draft": false,
+    "html_url": "https://github.com/goeselt/security-alerts/pull/30",
+    "author_login": "dependabot[bot]"
+  },
+  {
+    "number": 28,
+    "title": "fix: sanitize user input in query builder",
+    "draft": false,
+    "html_url": "https://github.com/goeselt/security-alerts/pull/28",
+    "author_login": "goeselt"
+  }
+]

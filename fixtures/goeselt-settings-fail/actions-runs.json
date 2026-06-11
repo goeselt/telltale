@@ -1,0 +1,60 @@
+{
+  "total_count": 5,
+  "workflow_runs": [
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-09T08:50:00Z",
+      "updated_at": "2026-06-09T08:55:30Z",
+      "html_url": "https://github.com/goeselt/settings-fail/actions/runs/6001",
+      "head_sha": "badf00dbadf00dbadf00dbadf00dbadf00dbadf0",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-08T15:20:00Z",
+      "updated_at": "2026-06-08T15:25:44Z",
+      "html_url": "https://github.com/goeselt/settings-fail/actions/runs/5990",
+      "head_sha": "aabbccdd",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-07T11:00:00Z",
+      "updated_at": "2026-06-07T11:04:15Z",
+      "html_url": "https://github.com/goeselt/settings-fail/actions/runs/5970",
+      "head_sha": "11223344",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-06T09:30:00Z",
+      "updated_at": "2026-06-06T09:34:22Z",
+      "html_url": "https://github.com/goeselt/settings-fail/actions/runs/5950",
+      "head_sha": "55667788",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-05T14:45:00Z",
+      "updated_at": "2026-06-05T14:50:11Z",
+      "html_url": "https://github.com/goeselt/settings-fail/actions/runs/5930",
+      "head_sha": "99aabbcc",
+      "head_branch": "main",
+      "event": "push"
+    }
+  ]
+}

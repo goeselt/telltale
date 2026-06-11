@@ -1,4 +1,11 @@
-import type { RepositorySnapshot, PolicyResult, ProbeStatus, SettingsViolation, RulesetViolation } from './types.ts'
+import type {
+  RepositorySnapshot,
+  PolicyResult,
+  ProbeStatus,
+  SettingsViolation,
+  RulesetViolation,
+  RulesetParameterViolation,
+} from './types.ts'
 import type {
   Policy,
   SettingsPolicy,
@@ -19,6 +26,7 @@ const EMPTY_RESULT: PolicyResult = {
   rulesets: 'not_applicable',
   rulesets_missing: [],
   rulesets_violations: [],
+  rulesets_evaluate_mode: [],
   security_findings: 'not_applicable',
   overall: 'ok',
 }
@@ -34,6 +42,7 @@ export function evaluatePolicy(snap: RepositorySnapshot, policy: Policy): Policy
     status: rulesets,
     missing: rulesets_missing,
     violations: rulesets_violations,
+    evaluateMode: rulesets_evaluate_mode,
   } = evalRulesets(snap, policy.rulesets)
   const security_findings = evalSecurityFindings(snap)
 
@@ -51,6 +60,7 @@ export function evaluatePolicy(snap: RepositorySnapshot, policy: Policy): Policy
     rulesets,
     rulesets_missing,
     rulesets_violations,
+    rulesets_evaluate_mode,
     security_findings,
     overall,
   }
@@ -59,8 +69,13 @@ export function evaluatePolicy(snap: RepositorySnapshot, policy: Policy): Policy
 export { EMPTY_RESULT as emptyPolicyResult }
 
 function evalRepository(snap: RepositorySnapshot, policy: RepositoryPolicy | undefined): ProbeStatus {
-  if (!policy?.allowed_default_branches?.length) return 'not_applicable'
-  return policy.allowed_default_branches.includes(snap.default_branch) ? 'ok' : 'failed'
+  if (!policy) return 'not_applicable'
+  const hasDefaultBranchPolicy = (policy.allowed_default_branches?.length ?? 0) > 0
+  const hasVisibilityPolicy = (policy.allowed_visibility?.length ?? 0) > 0
+  if (!hasDefaultBranchPolicy && !hasVisibilityPolicy) return 'not_applicable'
+  if (hasDefaultBranchPolicy && !policy.allowed_default_branches!.includes(snap.default_branch)) return 'failed'
+  if (hasVisibilityPolicy && !policy.allowed_visibility!.includes(snap.visibility)) return 'failed'
+  return 'ok'
 }
 
 function evalSettings(
@@ -132,28 +147,84 @@ function evalWorkflowHealth(snap: RepositorySnapshot, failOn: string[]): ProbeSt
 function evalRulesets(
   snap: RepositorySnapshot,
   policy: RulesetsPolicy | undefined,
-): { status: ProbeStatus; missing: string[]; violations: RulesetViolation[] } {
+): { status: ProbeStatus; missing: string[]; violations: RulesetViolation[]; evaluateMode: string[] } {
   if (snap.rulesets === undefined) {
-    if ('rulesets' in snap.probes) return { status: 'unknown', missing: [], violations: [] }
-    return { status: 'not_applicable', missing: [], violations: [] }
+    if ('rulesets' in snap.probes) return { status: 'unknown', missing: [], violations: [], evaluateMode: [] }
+    return { status: 'not_applicable', missing: [], violations: [], evaluateMode: [] }
   }
 
   const required = policy?.required_names ?? []
   const active = new Set(snap.rulesets.active_branch_ruleset_names)
-  const missing = required.filter((n) => !active.has(n))
+  const evaluate = new Set(snap.rulesets.evaluate_branch_ruleset_names)
+
+  // Rulesets in evaluate (dry-run) mode are reported as warnings; truly absent ones as failures.
+  const inEvaluateMode = required.filter((n) => !active.has(n) && evaluate.has(n))
+  const trulyMissing = required.filter((n) => !active.has(n) && !evaluate.has(n))
 
   const violations: RulesetViolation[] = []
   for (const [rulesetName, rulePolicy] of Object.entries(policy?.ruleset_rules ?? {})) {
-    if (!active.has(rulesetName)) continue // already in missing list
+    if (!active.has(rulesetName)) continue
     const present = new Set(snap.rulesets.named_rules[rulesetName] ?? [])
     const missingRules = rulePolicy.required_rules.filter((r) => !present.has(r))
     const forbiddenRules = (rulePolicy.forbidden_rules ?? []).filter((r) => present.has(r))
-    if (missingRules.length > 0 || forbiddenRules.length > 0)
-      violations.push({ ruleset: rulesetName, missing_rules: missingRules, forbidden_rules: forbiddenRules })
+
+    const paramViolations: RulesetParameterViolation[] = []
+    if (rulePolicy.pull_request && present.has('pull_request')) {
+      const params = snap.rulesets.named_rule_parameters[rulesetName]?.['pull_request'] ?? {}
+      const pp = rulePolicy.pull_request
+      if (pp.required_approving_review_count !== undefined) {
+        const got = (params['required_approving_review_count'] as number | undefined) ?? 0
+        if (got < pp.required_approving_review_count) {
+          paramViolations.push({
+            rule: 'pull_request',
+            param: 'required_approving_review_count',
+            expected: `>=${pp.required_approving_review_count}`,
+            got,
+          })
+        }
+      }
+      if (pp.dismiss_stale_reviews_on_push === true && params['dismiss_stale_reviews_on_push'] !== true) {
+        paramViolations.push({
+          rule: 'pull_request',
+          param: 'dismiss_stale_reviews_on_push',
+          expected: true,
+          got: params['dismiss_stale_reviews_on_push'] ?? false,
+        })
+      }
+      if (pp.require_code_owner_review === true && params['require_code_owner_review'] !== true) {
+        paramViolations.push({
+          rule: 'pull_request',
+          param: 'require_code_owner_review',
+          expected: true,
+          got: params['require_code_owner_review'] ?? false,
+        })
+      }
+      if (pp.require_last_push_approval === true && params['require_last_push_approval'] !== true) {
+        paramViolations.push({
+          rule: 'pull_request',
+          param: 'require_last_push_approval',
+          expected: true,
+          got: params['require_last_push_approval'] ?? false,
+        })
+      }
+    }
+
+    if (missingRules.length > 0 || forbiddenRules.length > 0 || paramViolations.length > 0)
+      violations.push({
+        ruleset: rulesetName,
+        missing_rules: missingRules,
+        forbidden_rules: forbiddenRules,
+        parameter_violations: paramViolations,
+      })
   }
 
-  const failed = missing.length > 0 || violations.length > 0
-  return { status: failed ? 'failed' : 'ok', missing, violations }
+  const hasFailed =
+    trulyMissing.length > 0 ||
+    violations.some(
+      (v) => v.missing_rules.length > 0 || v.forbidden_rules.length > 0 || v.parameter_violations.length > 0,
+    )
+  const status: ProbeStatus = hasFailed ? 'failed' : inEvaluateMode.length > 0 ? 'warning' : 'ok'
+  return { status, missing: trulyMissing, violations, evaluateMode: inEvaluateMode }
 }
 
 function evalIssues(snap: RepositorySnapshot): ProbeStatus {

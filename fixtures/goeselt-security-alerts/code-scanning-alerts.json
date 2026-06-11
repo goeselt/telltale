@@ -1,0 +1,6 @@
+[
+  { "number": 1, "rule_id": "go/sql-injection", "severity": "critical" },
+  { "number": 2, "rule_id": "go/path-injection", "severity": "high" },
+  { "number": 3, "rule_id": "go/log-injection", "severity": "high" },
+  { "number": 4, "rule_id": "go/incomplete-url-sanitization", "severity": "medium" }
+]

@@ -1,0 +1,23 @@
+{
+  "full_name": "goeselt/security-alerts",
+  "default_branch": "main",
+  "visibility": "public",
+  "archived": false,
+  "description": "Repository with open code scanning alerts",
+  "size": 620,
+  "license": { "spdx_id": "Apache-2.0", "name": "Apache License 2.0" },
+  "has_issues": true,
+  "has_projects": false,
+  "has_wiki": false,
+  "allow_auto_merge": true,
+  "delete_branch_on_merge": true,
+  "allow_squash_merge": true,
+  "allow_merge_commit": false,
+  "allow_rebase_merge": false,
+  "secret_scanning_enabled": true,
+  "secret_scanning_push_protection_enabled": true,
+  "dependabot_security_updates_enabled": true,
+  "web_commit_signoff_required": false,
+  "allow_forking": false,
+  "allow_update_branch": true
+}

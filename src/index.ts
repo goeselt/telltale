@@ -12,6 +12,7 @@ async function main(): Promise<void> {
   const fixturesDir = flag(args, '--fixtures')
   const out = flag(args, '--out') ?? process.env['TELLTALE_OUTPUT'] ?? 'overview.html'
   const configDir = flag(args, '--config-dir') ?? process.env['TELLTALE_CONFIG_DIR'] ?? 'config/'
+  const reposFile = flag(args, '--repos')
 
   const token = process.env['GITHUB_TOKEN']
 
@@ -26,7 +27,7 @@ async function main(): Promise<void> {
       })()
 
   process.stderr.write(`telltale: loading config from ${configDir}\n`)
-  const config = await loadConfig(resolve(configDir))
+  const config = await loadConfig(resolve(configDir), reposFile ? resolve(reposFile) : undefined)
 
   process.stderr.write(`telltale: collecting repositories from ${config.groups.length} group(s)\n`)
   const snapshots = await collectAll(client, config.groups, config.profiles)

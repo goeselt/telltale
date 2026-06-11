@@ -25,6 +25,7 @@ profiles:
           has_projects: true
           allow_merge_commit: true
           allow_rebase_merge: true
+          allow_all_pr_creation: true
       pull_requests:
         dependabot_warning_threshold: 3
       workflow_health:
@@ -49,6 +50,9 @@ profiles:
               - required_status_checks
             forbidden_rules:
               - merge_queue
+            pull_request:
+              required_approving_review_count: 0
+              dismiss_stale_reviews_on_push: true
 
   release-watch:
     collectors:

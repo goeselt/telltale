@@ -1,0 +1,60 @@
+{
+  "total_count": 5,
+  "workflow_runs": [
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-05T10:35:00Z",
+      "updated_at": "2026-06-05T10:39:15Z",
+      "html_url": "https://github.com/goeselt/evaluate-mode/actions/runs/9001",
+      "head_sha": "e1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-04T14:00:00Z",
+      "updated_at": "2026-06-04T14:04:22Z",
+      "html_url": "https://github.com/goeselt/evaluate-mode/actions/runs/8990",
+      "head_sha": "aabbccdd",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-03T09:30:00Z",
+      "updated_at": "2026-06-03T09:33:48Z",
+      "html_url": "https://github.com/goeselt/evaluate-mode/actions/runs/8970",
+      "head_sha": "11223344",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-02T11:00:00Z",
+      "updated_at": "2026-06-02T11:03:54Z",
+      "html_url": "https://github.com/goeselt/evaluate-mode/actions/runs/8950",
+      "head_sha": "55667788",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-01T08:00:00Z",
+      "updated_at": "2026-06-01T08:04:10Z",
+      "html_url": "https://github.com/goeselt/evaluate-mode/actions/runs/8930",
+      "head_sha": "99aabbcc",
+      "head_branch": "main",
+      "event": "push"
+    }
+  ]
+}
