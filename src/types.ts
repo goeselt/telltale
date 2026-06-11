@@ -20,6 +20,7 @@ export interface PullRequest {
 
 export interface PullRequestsData {
   open_count: number
+  dependabot_count: number
   items: PullRequest[]
 }
 
@@ -44,6 +45,9 @@ export interface WorkflowRun {
   run_started_at?: string
   updated_at: string
   html_url: string
+  is_main: boolean
+  event: string
+  head_branch: string | null
 }
 
 export interface WorkflowRunsData {
@@ -91,6 +95,7 @@ export interface RepositoryInfo {
   languages: Record<string, number> // lang --> percentage (0--100, one decimal)
   last_commit_sha: string | null
   last_commit_at: string | null
+  last_commit_verified?: boolean
   branch_count: number
 }
 

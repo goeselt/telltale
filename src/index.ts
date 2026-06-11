@@ -1,5 +1,5 @@
-import { writeFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { loadConfig } from './config.ts'
 import { LiveClient } from './github/live.ts'
 import { FixtureClient } from './github/fixture.ts'
@@ -42,6 +42,7 @@ async function main(): Promise<void> {
     process.stdout.write(report)
   } else {
     const outPath = resolve(out)
+    await mkdir(dirname(outPath), { recursive: true })
     await writeFile(outPath, report, 'utf-8')
     process.stderr.write(`telltale: wrote ${outPath}\n`)
   }

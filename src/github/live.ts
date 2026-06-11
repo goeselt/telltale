@@ -4,6 +4,7 @@ import type {
   GitHubPullRequest,
   GitHubRelease,
   GitHubWorkflowRun,
+  GitHubMergedPR,
   GitHubRuleset,
   GitHubRulesetDetail,
   GitHubCodeScanningAlert,
@@ -47,6 +48,15 @@ async function request(url: string, token: string, attempt = 0): Promise<Respons
     const after = Number.parseInt(res.headers.get('retry-after') ?? '60', 10) * 1000
     process.stderr.write(`telltale: rate limited; waiting ${after / 1000}s\n`)
     await sleep(after)
+    return request(url, token, attempt + 1)
+  }
+
+  if (res.status >= 500 && attempt < MAX_RETRIES) {
+    const delay = 1000 * 2 ** attempt
+    process.stderr.write(
+      `telltale: HTTP ${res.status} from ${url}; retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})\n`,
+    )
+    await sleep(delay)
     return request(url, token, attempt + 1)
   }
 
@@ -117,6 +127,7 @@ export class LiveClient implements GitHubClient {
       title: pr.title as string,
       draft: (pr.draft as boolean | undefined) ?? false,
       html_url: pr.html_url as string,
+      author_login: ((pr.user as Record<string, unknown> | undefined)?.login as string | undefined) ?? '',
     }))
   }
 
@@ -214,7 +225,36 @@ export class LiveClient implements GitHubClient {
       updated_at: (r.updated_at as string | undefined) ?? (r.created_at as string),
       html_url: r.html_url as string,
       status: (r.status as string | undefined) ?? null,
+      head_sha: (r.head_sha as string | undefined) ?? '',
+      head_branch: (r.head_branch as string | null | undefined) ?? null,
+      event: (r.event as string | undefined) ?? 'push',
     }))
+  }
+
+  async listMergedPullRequests(owner: string, repo: string, base: string, count: number): Promise<GitHubMergedPR[]> {
+    if (count <= 0) return []
+
+    const perPage = Math.min(Math.max(count, 1), 100)
+    const merged: GitHubMergedPR[] = []
+    let page = 1
+
+    while (merged.length < count) {
+      const items = await get<Record<string, unknown>[]>(
+        `/repos/${owner}/${repo}/pulls?state=closed&base=${encodeURIComponent(base)}&sort=updated&direction=desc&per_page=${perPage}&page=${page}`,
+        this.token,
+      )
+      for (const pr of items) {
+        if (pr['merged_at'] == null) continue
+        const head = pr['head'] as Record<string, unknown> | undefined
+        const sha = head?.['sha']
+        if (typeof sha === 'string') merged.push({ head_sha: sha })
+        if (merged.length >= count) break
+      }
+      if (items.length < perPage) break
+      page += 1
+    }
+
+    return merged
   }
 
   async getRuleset(owner: string, repo: string, id: number): Promise<GitHubRulesetDetail | null> {
@@ -262,14 +302,21 @@ export class LiveClient implements GitHubClient {
 
   async getLastCommit(owner: string, repo: string, branch: string): Promise<GitHubLastCommit | null> {
     try {
-      type CommitItem = { sha: string; commit: { committer: { date: string } } }
+      type CommitItem = {
+        sha: string
+        commit: { committer: { date: string }; verification?: { verified: boolean } }
+      }
       const items = await get<CommitItem[]>(
         `/repos/${owner}/${repo}/commits?sha=${encodeURIComponent(branch)}&per_page=1`,
         this.token,
       )
       const first = items[0]
       if (!first) return null
-      return { sha: first.sha, date: first.commit.committer.date }
+      return {
+        sha: first.sha,
+        date: first.commit.committer.date,
+        verified: first.commit.verification?.verified,
+      }
     } catch (err) {
       // 409 = empty repo (no commits)
       if (err instanceof ApiError && (err.status === 404 || err.status === 409)) return null

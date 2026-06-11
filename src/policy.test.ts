@@ -99,7 +99,7 @@ test('settings: no settings collected --> not_applicable', () => {
 })
 
 test('pull_requests: zero open PRs --> ok', () => {
-  const snap = makeSnap({ pull_requests: { open_count: 0, items: [] } })
+  const snap = makeSnap({ pull_requests: { open_count: 0, dependabot_count: 0, items: [] } })
   const result = evaluatePolicy(snap, defaultPolicy)
   assert.equal(result.pull_requests, 'ok')
 })
@@ -108,11 +108,36 @@ test('pull_requests: open PRs present --> ok (informational)', () => {
   const snap = makeSnap({
     pull_requests: {
       open_count: 2,
+      dependabot_count: 0,
       items: [
         { number: 1, title: 'PR 1', draft: false, html_url: 'https://github.com/test/repo/pull/1' },
         { number: 2, title: 'PR 2', draft: false, html_url: 'https://github.com/test/repo/pull/2' },
       ],
     },
+  })
+  const result = evaluatePolicy(snap, defaultPolicy)
+  assert.equal(result.pull_requests, 'ok')
+})
+
+test('pull_requests: dependabot_count at threshold --> warning', () => {
+  const snap = makeSnap({
+    pull_requests: { open_count: 8, dependabot_count: 8, items: [] },
+  })
+  const result = evaluatePolicy(snap, { pull_requests: { dependabot_warning_threshold: 8 } })
+  assert.equal(result.pull_requests, 'warning')
+})
+
+test('pull_requests: dependabot_count below threshold --> ok', () => {
+  const snap = makeSnap({
+    pull_requests: { open_count: 5, dependabot_count: 5, items: [] },
+  })
+  const result = evaluatePolicy(snap, { pull_requests: { dependabot_warning_threshold: 8 } })
+  assert.equal(result.pull_requests, 'ok')
+})
+
+test('pull_requests: dependabot_count high but no threshold configured --> ok', () => {
+  const snap = makeSnap({
+    pull_requests: { open_count: 10, dependabot_count: 10, items: [] },
   })
   const result = evaluatePolicy(snap, defaultPolicy)
   assert.equal(result.pull_requests, 'ok')
@@ -178,6 +203,9 @@ test('workflow_health: all success --> ok', () => {
           created_at: '2026-06-01T00:00:00Z',
           updated_at: '2026-06-01T00:02:00Z',
           html_url: 'https://example.com',
+          is_main: true,
+          event: 'push',
+          head_branch: 'main',
         },
       ],
     },
@@ -199,6 +227,9 @@ test('workflow_health: most recent run failed --> failed', () => {
           created_at: '2026-06-02T00:00:00Z',
           updated_at: '2026-06-02T00:01:30Z',
           html_url: 'https://example.com',
+          is_main: true,
+          event: 'push',
+          head_branch: 'main',
         },
         {
           workflow: 'CI',
@@ -206,6 +237,9 @@ test('workflow_health: most recent run failed --> failed', () => {
           created_at: '2026-06-01T00:00:00Z',
           updated_at: '2026-06-01T00:01:30Z',
           html_url: 'https://example.com',
+          is_main: true,
+          event: 'push',
+          head_branch: 'main',
         },
       ],
     },
@@ -227,6 +261,9 @@ test('workflow_health: only older run failed --> warning', () => {
           created_at: '2026-06-02T00:00:00Z',
           updated_at: '2026-06-02T00:01:30Z',
           html_url: 'https://example.com',
+          is_main: true,
+          event: 'push',
+          head_branch: 'main',
         },
         {
           workflow: 'CI',
@@ -234,6 +271,9 @@ test('workflow_health: only older run failed --> warning', () => {
           created_at: '2026-06-01T00:00:00Z',
           updated_at: '2026-06-01T00:01:30Z',
           html_url: 'https://example.com',
+          is_main: true,
+          event: 'push',
+          head_branch: 'main',
         },
       ],
     },
@@ -254,7 +294,7 @@ test('overall rollup: any failed --> overall failed', () => {
       allow_merge_commit: false,
       allow_rebase_merge: false,
     },
-    pull_requests: { open_count: 0, items: [] },
+    pull_requests: { open_count: 0, dependabot_count: 0, items: [] },
   })
   const result = evaluatePolicy(snap, defaultPolicy)
   assert.equal(result.overall, 'failed')
@@ -264,6 +304,7 @@ test('overall rollup: only warnings --> overall warning', () => {
   const snap = makeSnap({
     pull_requests: {
       open_count: 1,
+      dependabot_count: 0,
       items: [{ number: 1, title: 'PR', draft: false, html_url: 'https://example.com' }],
     },
     release: { status: 'not_found' },
