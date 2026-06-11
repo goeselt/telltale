@@ -6,6 +6,7 @@ import type {
   GitHubPullRequest,
   GitHubRelease,
   GitHubWorkflowRun,
+  GitHubMergedPR,
   GitHubRuleset,
   GitHubRulesetDetail,
   GitHubCodeScanningAlert,
@@ -69,6 +70,7 @@ export class FixtureClient implements GitHubClient {
       title: pr.title as string,
       draft: (pr.draft as boolean | undefined) ?? false,
       html_url: pr.html_url as string,
+      author_login: (pr.author_login as string | undefined) ?? '',
     }))
   }
 
@@ -98,7 +100,17 @@ export class FixtureClient implements GitHubClient {
       updated_at: (r.updated_at as string | undefined) ?? (r.created_at as string),
       html_url: r.html_url as string,
       status: (r.status as string | undefined) ?? null,
+      head_sha: (r.head_sha as string | undefined) ?? '',
+      head_branch: (r.head_branch as string | null | undefined) ?? null,
+      event: (r.event as string | undefined) ?? 'push',
     }))
+  }
+
+  async listMergedPullRequests(owner: string, repo: string, base: string, count: number): Promise<GitHubMergedPR[]> {
+    void base
+    void count
+    const items = await this.loadOptional<Array<{ head_sha: string }>>(owner, repo, 'merged-pulls.json')
+    return items ?? []
   }
 
   async getRuleset(owner: string, repo: string, id: number): Promise<GitHubRulesetDetail | null> {

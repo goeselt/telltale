@@ -14,6 +14,7 @@ export async function collectPullRequests(
       ok: true,
       data: {
         open_count: items.length,
+        dependabot_count: items.filter((pr) => pr.author_login === 'dependabot[bot]').length,
         items: items.map((pr) => ({
           number: pr.number,
           title: pr.title,

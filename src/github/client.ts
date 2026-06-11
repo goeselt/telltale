@@ -29,6 +29,7 @@ export interface GitHubPullRequest {
   title: string
   draft: boolean
   html_url: string
+  author_login: string
 }
 
 export interface GitHubRelease {
@@ -46,6 +47,13 @@ export interface GitHubWorkflowRun {
   updated_at: string
   html_url: string
   status: string | null
+  head_sha: string
+  head_branch: string | null
+  event: string
+}
+
+export interface GitHubMergedPR {
+  head_sha: string
 }
 
 export interface GitHubRuleset {
@@ -72,6 +80,7 @@ export interface TagResolution {
 export interface GitHubLastCommit {
   sha: string
   date: string
+  verified?: boolean
 }
 
 export interface GitHubClient {
@@ -80,6 +89,7 @@ export interface GitHubClient {
   getLatestRelease(owner: string, repo: string): Promise<GitHubRelease | null>
   resolveTag(owner: string, repo: string, tag: string, defaultBranch?: string): Promise<TagResolution | null>
   listRecentWorkflowRuns(owner: string, repo: string, count: number): Promise<GitHubWorkflowRun[]>
+  listMergedPullRequests(owner: string, repo: string, base: string, count: number): Promise<GitHubMergedPR[]>
   listRulesets(owner: string, repo: string): Promise<GitHubRuleset[]>
   getRuleset(owner: string, repo: string, id: number): Promise<GitHubRulesetDetail | null>
   listUserRepositories(username: string): Promise<GitHubRepository[]>

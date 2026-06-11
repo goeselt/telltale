@@ -60,9 +60,14 @@ export interface RepositoryPolicy {
   allowed_default_branches?: string[]
 }
 
+export interface PullRequestsPolicy {
+  dependabot_warning_threshold?: number
+}
+
 export interface Policy {
   repository?: RepositoryPolicy
   settings?: SettingsPolicy
+  pull_requests?: PullRequestsPolicy
   workflow_health?: WorkflowHealthPolicy
   latest_release?: ReleasePolicy
   rulesets?: RulesetsPolicy

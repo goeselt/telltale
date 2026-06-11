@@ -99,6 +99,7 @@ dl.meta.single>dt:nth-child(even){background:#f9fafb}
 .wf-runs{font-size:.84em;margin-top:12px}
 .wf-lanes{display:grid;grid-template-columns:max-content 1fr;align-items:start;gap:6px 14px}
 .wf-lane-name{font-weight:600;font-size:.88em;padding-top:3px}
+.wf-lane-info{font-weight:400;color:#656d76;font-size:.85em}
 .wf-cells{display:flex;gap:3px;flex-wrap:wrap}
 .wf-cell{
   font-size:.82em;padding:2px 7px;border-radius:4px;text-decoration:none;
@@ -111,6 +112,7 @@ dl.meta.single>dt:nth-child(even){background:#f9fafb}
 .wf-cell.action  {background:#fff8e1;border-color:#ffd54f}
 .wf-cell.cancel  {background:#f5f5f5;border-color:#bdbdbd;color:#757575}
 .wf-cell.pending {background:#e8eaf6;border-color:#9fa8da}
+.wf-cell.other{opacity:.5;border-style:dashed}
 
 /* violations */
 .violations{margin-top:14px}
@@ -311,9 +313,11 @@ function infoBlock(snap: RepositorySnapshot): string {
     const date = info.last_commit_at.slice(0, 10)
     if (info.last_commit_sha) {
       const short = info.last_commit_sha.slice(0, 7)
-      const sha = canLink
+      const shaLink = canLink
         ? `<a href="https://github.com/${snap.full_name}/commit/${info.last_commit_sha}">${short}</a>`
         : short
+      const lock = signIcon(info.last_commit_verified)
+      const sha = lock ? `${shaLink} ${lock}` : shaLink
       items.push(['HEAD', `${esc(snap.default_branch)} &middot; ${sha} &middot; ${esc(date)}`])
     } else {
       items.push(['HEAD', `${esc(snap.default_branch)} &middot; ${esc(date)}`])
@@ -350,15 +354,17 @@ function releaseMetaItem(snap: RepositorySnapshot): [string, string] | null {
   const parts: string[] = []
   const tag = release.tag_name ?? '?'
 
-  if (canLink && release.html_url) parts.push(`<a href="${release.html_url}">${esc(tag)}</a>`)
-  else parts.push(esc(tag))
+  const tagLink = canLink && release.html_url ? `<a href="${release.html_url}">${esc(tag)}</a>` : esc(tag)
+  const tagLock = signIcon(release.tag_verified)
+  parts.push(tagLock ? `${tagLink} ${tagLock}` : tagLink)
 
   if (release.tag_sha) {
     const short = release.tag_sha.slice(0, 7)
-    const sha = canLink
+    const shaLink = canLink
       ? `<a href="https://github.com/${snap.full_name}/commit/${release.tag_sha}">${short}</a>`
       : short
-    parts.push(sha)
+    const shaLock = signIcon(release.commit_verified)
+    parts.push(shaLock ? `${shaLink} ${shaLock}` : shaLink)
   }
   if (release.published_at) parts.push(esc(release.published_at.slice(0, 10)))
 
@@ -384,11 +390,10 @@ function checkRows(
 
   if (snap.pull_requests !== undefined) {
     const count = snap.pull_requests.open_count
-    add(
-      'Pull Requests',
-      snap.policy.pull_requests,
-      count === 0 ? 'No open PRs' : `${count} open PR${count > 1 ? 's' : ''}`,
-    )
+    const depCount = snap.pull_requests.dependabot_count
+    let detail = count === 0 ? 'No open PRs' : `${count} open PR${count > 1 ? 's' : ''}`
+    if (depCount > 0) detail += ` (${depCount} dependabot)`
+    add('Pull Requests', snap.policy.pull_requests, detail)
   } else if ('pull_requests' in snap.probes) {
     add('Pull Requests', 'unknown', 'unreadable')
   }
@@ -402,10 +407,11 @@ function checkRows(
   if (snap.workflows !== undefined) {
     const wf = snap.workflows
     let detail: string
+    const branch = snap.default_branch
     if (snap.policy.workflow_health === 'unknown') detail = 'no completed runs found'
     else if (wf.failed_recent_runs > 0)
-      detail = `${wf.failed_recent_runs} of the ${wf.recent_runs_checked} most recent runs failed`
-    else detail = `${wf.recent_runs_checked} most recent runs passed`
+      detail = `${wf.failed_recent_runs} of the ${wf.recent_runs_checked} most recent runs on ${branch} failed`
+    else detail = `${wf.recent_runs_checked} most recent runs on ${branch} passed`
     add('Workflow Health', snap.policy.workflow_health, detail)
   } else if ('workflow_runs' in snap.probes) {
     add('Workflow Health', 'unknown', 'unreadable')
@@ -466,33 +472,56 @@ function checkRows(
 }
 
 function workflowSection(runs: WorkflowRun[], recentCount: number): string {
-  const filtered = runs.filter((r) => !DEPENDABOT_RUN.test(r.workflow) && r.conclusion !== 'skipped')
-  if (filtered.length === 0) return ''
+  const visible = runs.filter((r) => r.conclusion !== 'skipped')
+  if (visible.length === 0) return ''
+
+  const depRuns = visible.filter((r) => DEPENDABOT_RUN.test(r.workflow))
+  const otherRuns = visible.filter((r) => !DEPENDABOT_RUN.test(r.workflow))
 
   const groups = new Map<string, WorkflowRun[]>()
-  for (const r of filtered) {
+  for (const r of otherRuns) {
     const lane = groups.get(r.workflow)
     if (!lane) groups.set(r.workflow, [r])
     else lane.push(r)
   }
 
+  if (groups.size === 0 && depRuns.length === 0) return ''
+
   const parts: string[] = []
   parts.push('<div class="wf-runs">')
   parts.push(`<p class="section-title">Workflow runs (${recentCount} most recent evaluated for health)</p>`)
   parts.push('<div class="wf-lanes">')
+
   for (const [wfName, wfRuns] of groups) {
     parts.push(`<span class="wf-lane-name">${esc(wfName)}</span>`)
     parts.push('<div class="wf-cells">')
-    for (const r of wfRuns) {
+    for (const r of wfRuns.slice(0, 20)) {
       const icon = conclusionIcon(r.conclusion)
       const cls = conclusionClass(r.conclusion)
+      const otherCls = r.is_main ? '' : ' other'
       const dur = fmtDur(r.run_started_at ?? r.created_at, r.updated_at)
       parts.push(
-        `<a href="${r.html_url}" class="wf-cell ${cls}" title="${esc(fmtRunDate(r.created_at))}">${icon} ${esc(dur)}</a>`,
+        `<a href="${r.html_url}" class="wf-cell ${cls}${otherCls}" title="${runTooltipTitle(r)}">${icon} ${esc(dur)}</a>`,
       )
     }
     parts.push('</div>')
   }
+
+  if (depRuns.length > 0) {
+    parts.push('<span class="wf-lane-name">Dependabot <span class="wf-lane-info">(info)</span></span>')
+    parts.push('<div class="wf-cells">')
+    for (const r of depRuns.slice(0, 20)) {
+      const icon = conclusionIcon(r.conclusion)
+      const cls = conclusionClass(r.conclusion)
+      const dur = fmtDur(r.run_started_at ?? r.created_at, r.updated_at)
+      const label = r.workflow.replace(DEPENDABOT_RUN, '').trim()
+      parts.push(
+        `<a href="${r.html_url}" class="wf-cell ${cls}" title="${esc(label)} &middot; ${esc(fmtRunDate(r.created_at))}">${icon} ${esc(dur)}</a>`,
+      )
+    }
+    parts.push('</div>')
+  }
+
   parts.push('</div></div>')
   return parts.join('\n')
 }
@@ -591,6 +620,28 @@ function fmtDur(startIso: string, endIso: string): string {
   const m = Math.floor(s / 60),
     r = s % 60
   return r > 0 ? `${m}m ${r}s` : `${m}m`
+}
+
+const TARGET_MAX = 30
+
+function triggerType(event: string, headBranch: string | null, isMain: boolean): string {
+  if (event === 'schedule') return 'schedule'
+  if (event === 'pull_request') return isMain ? 'pull_request merge' : 'pull_request iteration'
+  if (event === 'push' && headBranch && /^v\d/.test(headBranch)) return 'push tag'
+  return event
+}
+
+function truncTarget(branch: string | null): string {
+  if (!branch) return '?'
+  return branch.length > TARGET_MAX ? `${branch.slice(0, TARGET_MAX - 1)}...` : branch
+}
+
+function runTooltipTitle(r: WorkflowRun): string {
+  return [
+    esc(triggerType(r.event, r.head_branch, r.is_main)),
+    esc(truncTarget(r.head_branch)),
+    esc(fmtRunDate(r.created_at)),
+  ].join(' &middot; ')
 }
 
 function conclusionIcon(conclusion: string | null): string {

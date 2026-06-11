@@ -105,13 +105,11 @@ See [`config/README.md`](config/README.md) for the full configuration reference.
 
 ## Scheduled Report Workflow
 
-See `.github/workflows/report.yml`. The workflow generates `overview.html`, commits it back to the repository, and
-deploys it to GitHub Pages. It requires:
+See `.github/workflows/report.yml`. The workflow generates the report and deploys it directly to GitHub Pages (no
+repository commit). It requires:
 
 - `vars.RELEASE_APP_ID` -- GitHub App client ID (needs read access to all monitored repositories)
 - `secrets.RELEASE_APP_KEY` -- GitHub App private key
-- `vars.RELEASE_SIGNING_USER` / `vars.RELEASE_SIGNING_EMAIL` / `secrets.RELEASE_SIGNING_KEY` -- GPG commit signing
-  (required if branch protection enforces signed commits)
 
 ### GitHub Pages Setup
 

@@ -1,5 +1,12 @@
 import type { RepositorySnapshot, PolicyResult, ProbeStatus, SettingsViolation, RulesetViolation } from './types.ts'
-import type { Policy, SettingsPolicy, RulesetsPolicy, RepositoryPolicy, ReleasePolicy } from './config.ts'
+import type {
+  Policy,
+  SettingsPolicy,
+  RulesetsPolicy,
+  RepositoryPolicy,
+  ReleasePolicy,
+  PullRequestsPolicy,
+} from './config.ts'
 
 const EMPTY_RESULT: PolicyResult = {
   repository: 'not_applicable',
@@ -19,7 +26,7 @@ const EMPTY_RESULT: PolicyResult = {
 export function evaluatePolicy(snap: RepositorySnapshot, policy: Policy): PolicyResult {
   const repository = evalRepository(snap, policy.repository)
   const { status: settings, violations: settings_violations } = evalSettings(snap, policy.settings)
-  const pull_requests = evalPullRequests(snap)
+  const pull_requests = evalPullRequests(snap, policy.pull_requests)
   const issues = evalIssues(snap)
   const release = evalRelease(snap, policy.latest_release)
   const workflow_health = evalWorkflowHealth(snap, policy.workflow_health?.fail_on_conclusions ?? [])
@@ -82,11 +89,13 @@ function evalSettings(
   return { status: violations.length > 0 ? 'failed' : 'ok', violations }
 }
 
-function evalPullRequests(snap: RepositorySnapshot): ProbeStatus {
+function evalPullRequests(snap: RepositorySnapshot, policy: PullRequestsPolicy | undefined): ProbeStatus {
   if (snap.pull_requests === undefined) {
     if ('pull_requests' in snap.probes) return 'unknown'
     return 'not_applicable'
   }
+  const threshold = policy?.dependabot_warning_threshold
+  if (threshold !== undefined && snap.pull_requests.dependabot_count >= threshold) return 'warning'
   return 'ok'
 }
 
@@ -111,8 +120,8 @@ function evalWorkflowHealth(snap: RepositorySnapshot, failOn: string[]): ProbeSt
     return 'not_applicable'
   }
   const failSet = new Set(failOn)
-  // Only evaluate the first N runs; the rest are fetched for display grouping only.
-  const relevant = snap.workflows.runs.slice(0, snap.workflows.recent_runs_checked)
+  // Only main-branch runs (direct pushes or final merged-PR commits) are evaluated.
+  const relevant = snap.workflows.runs.filter((r) => r.is_main).slice(0, snap.workflows.recent_runs_checked)
   const isFail = (r: { conclusion: string | null }) => r.conclusion !== null && failSet.has(r.conclusion)
   // Most recent run (index 0) failed --> failed; any older run failed --> warning.
   if (relevant[0] && isFail(relevant[0])) return 'failed'

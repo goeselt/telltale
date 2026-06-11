@@ -131,7 +131,7 @@ test('renderDetail: private repo without expose_private_name has no GitHub link'
 
 test('renderDetail: shows PR count', () => {
   const snap = makeSnap({
-    pull_requests: { open_count: 3, items: [] },
+    pull_requests: { open_count: 3, dependabot_count: 0, items: [] },
     policy: {
       repository: 'not_applicable',
       settings: 'not_applicable',
@@ -154,7 +154,7 @@ test('renderDetail: shows PR count', () => {
 
 test('renderDetail: no open PRs shows ok', () => {
   const snap = makeSnap({
-    pull_requests: { open_count: 0, items: [] },
+    pull_requests: { open_count: 0, dependabot_count: 0, items: [] },
     policy: {
       repository: 'not_applicable',
       settings: 'not_applicable',
@@ -176,7 +176,7 @@ test('renderDetail: no open PRs shows ok', () => {
 
 test('renderCardGrid: shows issues count when present', () => {
   const snap = makeSnap({
-    pull_requests: { open_count: 3, items: [] },
+    pull_requests: { open_count: 3, dependabot_count: 0, items: [] },
     issues: { open_count: 7 },
   })
   const out = renderCardGrid([snap])
@@ -185,7 +185,7 @@ test('renderCardGrid: shows issues count when present', () => {
 })
 
 test('renderCardGrid: omits issues segment when not collected', () => {
-  const snap = makeSnap({ pull_requests: { open_count: 2, items: [] } })
+  const snap = makeSnap({ pull_requests: { open_count: 2, dependabot_count: 0, items: [] } })
   const out = renderCardGrid([snap])
   assert.match(out, /2 PRs/)
   assert.doesNotMatch(out, /issues/)
@@ -288,6 +288,9 @@ test('renderDetail: failed workflow shows run name', () => {
           created_at: '2026-06-01T00:00:00Z',
           updated_at: '2026-06-01T00:01:12Z',
           html_url: 'https://example.com',
+          is_main: true,
+          event: 'push',
+          head_branch: 'main',
         },
       ],
     },

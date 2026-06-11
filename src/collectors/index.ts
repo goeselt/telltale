@@ -49,7 +49,9 @@ export async function collectSnapshot(opts: CollectOptions): Promise<RepositoryS
       : Promise.resolve(null),
     c.pull_requests ? collectPullRequests(client, owner!, repo!) : Promise.resolve(null),
     c.latest_release ? collectRelease(client, owner!, repo!, repoData.default_branch) : Promise.resolve(null),
-    c.workflow_runs ? collectWorkflowRuns(client, owner!, repo!, count, failOnConclusions) : Promise.resolve(null),
+    c.workflow_runs
+      ? collectWorkflowRuns(client, owner!, repo!, repoData.default_branch, count, failOnConclusions)
+      : Promise.resolve(null),
     c.rulesets ? collectRulesets(client, owner!, repo!, rulesetDetailNames) : Promise.resolve(null),
     c.security_findings ? collectSecurityFindings(client, owner!, repo!) : Promise.resolve(null),
   ])

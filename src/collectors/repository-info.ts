@@ -34,6 +34,7 @@ export async function collectRepositoryInfo(
         languages,
         last_commit_sha: lastCommit?.sha ?? null,
         last_commit_at: lastCommit?.date ?? null,
+        last_commit_verified: lastCommit?.verified,
         branch_count: branchCount,
       },
     }
