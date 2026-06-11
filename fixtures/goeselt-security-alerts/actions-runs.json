@@ -1,0 +1,60 @@
+{
+  "total_count": 5,
+  "workflow_runs": [
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-10T09:05:00Z",
+      "updated_at": "2026-06-10T09:09:31Z",
+      "html_url": "https://github.com/goeselt/security-alerts/actions/runs/10001",
+      "head_sha": "cafebabecafebabecafebabecafebabecafebabe",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-09T14:00:00Z",
+      "updated_at": "2026-06-09T14:04:22Z",
+      "html_url": "https://github.com/goeselt/security-alerts/actions/runs/9980",
+      "head_sha": "aabbccdd",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-08T10:30:00Z",
+      "updated_at": "2026-06-08T10:35:17Z",
+      "html_url": "https://github.com/goeselt/security-alerts/actions/runs/9960",
+      "head_sha": "11223344",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "Code Scanning",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-08T10:36:00Z",
+      "updated_at": "2026-06-08T10:44:30Z",
+      "html_url": "https://github.com/goeselt/security-alerts/actions/runs/9959",
+      "head_sha": "11223344",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-07T08:00:00Z",
+      "updated_at": "2026-06-07T08:04:50Z",
+      "html_url": "https://github.com/goeselt/security-alerts/actions/runs/9940",
+      "head_sha": "55667788",
+      "head_branch": "main",
+      "event": "push"
+    }
+  ]
+}

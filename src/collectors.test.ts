@@ -26,6 +26,13 @@ function repo(full_name: string, fork: boolean): GitHubRepository {
     allow_squash_merge: true,
     allow_merge_commit: true,
     allow_rebase_merge: true,
+    pull_request_creation_policy: undefined,
+    secret_scanning_enabled: false,
+    secret_scanning_push_protection_enabled: false,
+    web_commit_signoff_required: false,
+    allow_forking: true,
+    allow_update_branch: false,
+    dependabot_security_updates_enabled: false,
   }
 }
 

@@ -1,0 +1,60 @@
+{
+  "total_count": 5,
+  "workflow_runs": [
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-08T17:25:00Z",
+      "updated_at": "2026-06-08T17:29:42Z",
+      "html_url": "https://github.com/goeselt/ruleset-violations/actions/runs/7001",
+      "head_sha": "face1234face1234face1234face1234face1234",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-07T10:00:00Z",
+      "updated_at": "2026-06-07T10:04:18Z",
+      "html_url": "https://github.com/goeselt/ruleset-violations/actions/runs/6980",
+      "head_sha": "aabbccdd",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-06T14:30:00Z",
+      "updated_at": "2026-06-06T14:34:55Z",
+      "html_url": "https://github.com/goeselt/ruleset-violations/actions/runs/6960",
+      "head_sha": "11223344",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-05T09:00:00Z",
+      "updated_at": "2026-06-05T09:03:37Z",
+      "html_url": "https://github.com/goeselt/ruleset-violations/actions/runs/6940",
+      "head_sha": "55667788",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-04T11:15:00Z",
+      "updated_at": "2026-06-04T11:19:02Z",
+      "html_url": "https://github.com/goeselt/ruleset-violations/actions/runs/6920",
+      "head_sha": "99aabbcc",
+      "head_branch": "main",
+      "event": "push"
+    }
+  ]
+}

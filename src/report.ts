@@ -1,4 +1,10 @@
-import type { RepositorySnapshot, ProbeStatus, WorkflowRun } from './types.ts'
+import type {
+  RepositorySnapshot,
+  ProbeStatus,
+  WorkflowRun,
+  SettingsViolation,
+  RulesetParameterViolation,
+} from './types.ts'
 
 const ICON_OK = '\u2705'
 const ICON_WARNING = '\u26A0\uFE0F'
@@ -9,6 +15,7 @@ const ICON_LOCK = '\u{1F512}'
 const ICON_TIMER = '\u23F1\uFE0F'
 const ICON_PENDING = '\u23F3'
 const ICON_QUESTION = '\u2753'
+const ICON_EXTERNAL = '&#x2197;'
 
 const STATUS_ICON: Record<ProbeStatus, string> = {
   ok: ICON_OK,
@@ -26,7 +33,7 @@ body{
   padding:24px 16px 48px
 }
 .container{max-width:1100px;margin:0 auto}
-a{color:#0969da}
+a{color:#0969da;text-decoration:none}
 
 /* header */
 h1{font-size:1.4rem;font-weight:700;margin-bottom:4px}
@@ -77,8 +84,8 @@ blockquote.desc{
 blockquote.desc a{color:#0969da;font-style:normal}
 
 /* meta list */
-dl.meta{display:grid;grid-template-columns:auto 1fr;margin:0 0 16px;font-size:.84em}
-dl.meta dt{font-weight:600;color:#656d76;white-space:nowrap;padding:3px 16px 3px 6px}
+dl.meta{display:grid;grid-template-columns:180px 1fr;margin:0 0 16px;font-size:.84em}
+dl.meta dt{font-weight:600;color:#656d76;white-space:normal;overflow-wrap:break-word;padding:3px 16px 3px 6px}
 dl.meta dd{margin:0;padding:3px 6px}
 dl.meta>:nth-child(4n+3),dl.meta>:nth-child(4n){background:#f9fafb}
 dl.meta.single>dt{grid-column:1/-1;background:none}
@@ -87,7 +94,7 @@ dl.meta.single>dt:nth-child(even){background:#f9fafb}
 /* meta+checks shared column alignment */
 .meta-section{display:grid;grid-template-columns:max-content 1fr}
 .meta-section>blockquote.desc,.meta-section>p.section-title{grid-column:1/-1}
-.meta-section>dl.meta{grid-column:1/-1;grid-template-columns:subgrid}
+.meta-section>dl.meta{grid-column:1/-1}
 
 /* section title (checks, workflow runs) */
 .section-title{
@@ -97,10 +104,10 @@ dl.meta.single>dt:nth-child(even){background:#f9fafb}
 
 /* workflow runs */
 .wf-runs{font-size:.84em;margin-top:12px}
-.wf-lanes{display:grid;grid-template-columns:max-content 1fr;align-items:start;gap:6px 14px}
-.wf-lane-name{font-weight:600;font-size:.88em;padding-top:3px}
+.wf-lanes{display:grid;grid-template-columns:180px 1fr;align-items:start;gap:6px 0}
+.wf-lane-name{font-weight:600;color:#656d76;padding:3px 16px 3px 6px}
 .wf-lane-info{font-weight:400;color:#656d76;font-size:.85em}
-.wf-cells{display:flex;gap:3px;flex-wrap:wrap}
+.wf-cells{display:flex;gap:3px;flex-wrap:wrap;padding:3px 6px}
 .wf-cell{
   font-size:.82em;padding:2px 7px;border-radius:4px;text-decoration:none;
   color:#24292f;border:1px solid transparent;white-space:nowrap;transition:filter .1s
@@ -116,6 +123,7 @@ dl.meta.single>dt:nth-child(even){background:#f9fafb}
 
 /* violations */
 .violations{margin-top:14px}
+
 `
 
 // --- public API ---
@@ -211,27 +219,48 @@ export function renderDetail(snap: RepositorySnapshot): string {
 
   if (snap.policy.settings === 'failed' && snap.policy.settings_violations.length > 0) {
     parts.push('<div class="violations"><h3 class="section-title">Settings violations</h3>')
-    parts.push('<dl class="meta single">')
+    parts.push('<dl class="meta">')
     for (const v of snap.policy.settings_violations) {
-      const issue = v.issue === 'forbidden_enabled' ? 'forbidden' : 'required'
-      parts.push(`<dt>${esc(v.key)}: ${issue}</dt>`)
+      const [key, action] = settingsViolationParts(v)
+      parts.push(`<dt>${esc(key)}</dt><dd>${action}</dd>`)
     }
     parts.push('</dl></div>')
   }
 
   if (snap.policy.rulesets_missing.length > 0) {
     parts.push('<div class="violations"><h3 class="section-title">Missing rulesets</h3>')
-    parts.push('<dl class="meta single">')
-    for (const name of snap.policy.rulesets_missing) parts.push(`<dt>${esc(name)}</dt>`)
+    parts.push('<dl class="meta">')
+    for (const name of snap.policy.rulesets_missing) {
+      parts.push(`<dt>${esc(name)}</dt><dd>required but not found</dd>`)
+    }
+    parts.push('</dl></div>')
+  }
+
+  if (snap.policy.rulesets_evaluate_mode.length > 0) {
+    parts.push('<div class="violations"><h3 class="section-title">Rulesets in evaluate (dry-run) mode</h3>')
+    parts.push('<dl class="meta">')
+    for (const name of snap.policy.rulesets_evaluate_mode) {
+      parts.push(`<dt>${esc(name)}</dt><dd>not enforced; set enforcement to active</dd>`)
+    }
     parts.push('</dl></div>')
   }
 
   if (snap.policy.rulesets_violations.length > 0) {
     parts.push('<div class="violations"><h3 class="section-title">Ruleset rule violations</h3>')
-    parts.push('<dl class="meta single">')
+    parts.push('<dl class="meta">')
     for (const v of snap.policy.rulesets_violations) {
-      for (const r of v.missing_rules) parts.push(`<dt>${esc(v.ruleset)}:${esc(r)}: required</dt>`)
-      for (const r of v.forbidden_rules) parts.push(`<dt>${esc(v.ruleset)}:${esc(r)}: forbidden</dt>`)
+      for (const r of v.missing_rules) {
+        const [key, action] = ruleViolationParts(r, 'add', v.ruleset)
+        parts.push(`<dt>${esc(key)}</dt><dd>${action}</dd>`)
+      }
+      for (const r of v.forbidden_rules) {
+        const [key, action] = ruleViolationParts(r, 'remove', v.ruleset)
+        parts.push(`<dt>${esc(key)}</dt><dd>${action}</dd>`)
+      }
+      for (const pv of v.parameter_violations) {
+        const [key, action] = paramViolationParts(pv, v.ruleset)
+        parts.push(`<dt>${esc(key)}</dt><dd>${action}</dd>`)
+      }
     }
     parts.push('</dl></div>')
   }
@@ -301,7 +330,7 @@ function infoBlock(snap: RepositorySnapshot): string {
   const descContent = rawDesc ? esc(rawDesc) : '<em>no description</em>'
   if (canLink) {
     parts.push(
-      `<blockquote class="desc">${descContent} <a href="https://github.com/${snap.full_name}">(github.com)</a></blockquote>`,
+      `<blockquote class="desc">${descContent} <a href="https://github.com/${snap.full_name}" title="Open on GitHub">${ICON_EXTERNAL}</a></blockquote>`,
     )
   } else {
     parts.push(`<blockquote class="desc">${descContent}</blockquote>`)
@@ -382,9 +411,9 @@ function checkRows(
 
   if (snap.policy.repository !== 'not_applicable') {
     const detail =
-      snap.policy.repository === 'failed'
-        ? `${esc(snap.default_branch)} is not an allowed branch name`
-        : esc(snap.default_branch)
+      snap.policy.repository === 'ok'
+        ? esc(snap.default_branch)
+        : `${esc(snap.default_branch)} &middot; ${esc(snap.visibility)}`
     add('Default Branch', snap.policy.repository, detail)
   }
 
@@ -436,11 +465,13 @@ function checkRows(
     let detail: string
     if (names.length === 0) {
       detail = 'no active branch rulesets'
-    } else if (snap.policy.rulesets_violations.length === 0) {
+    } else if (snap.policy.rulesets_evaluate_mode.length > 0 && snap.policy.rulesets_violations.length === 0) {
+      detail = `${snap.policy.rulesets_evaluate_mode.length} in evaluate mode`
+    } else if (snap.policy.rulesets_violations.length === 0 && snap.policy.rulesets_evaluate_mode.length === 0) {
       detail = 'all checks passed'
     } else {
       const n = snap.policy.rulesets_violations.reduce(
-        (s, v) => s + v.missing_rules.length + v.forbidden_rules.length,
+        (s, v) => s + v.missing_rules.length + v.forbidden_rules.length + v.parameter_violations.length,
         0,
       )
       detail = `${n} finding${n !== 1 ? 's' : ''}`
@@ -656,4 +687,68 @@ function conclusionIcon(conclusion: string | null): string {
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+// --- GitHub UI labels ---
+
+const SETTINGS_LABELS: Record<string, string> = {
+  has_issues: 'Issues',
+  has_projects: 'Projects',
+  has_wiki: 'Wikis',
+  allow_auto_merge: 'Allow auto-merge',
+  delete_branch_on_merge: 'Automatically delete head branches',
+  allow_squash_merge: 'Allow squash merging',
+  allow_merge_commit: 'Allow merge commits',
+  allow_rebase_merge: 'Allow rebase merging',
+  allow_all_pr_creation: 'Allow all users to create pull requests',
+  secret_scanning_enabled: 'Secret scanning',
+  secret_scanning_push_protection_enabled: 'Secret scanning push protection',
+  dependabot_security_updates_enabled: 'Dependabot security updates',
+  web_commit_signoff_required: 'Require web commit sign-off',
+  allow_forking: 'Allow forking',
+  allow_update_branch: 'Always suggest updating pull request branches',
+}
+
+const RULESET_RULE_LABELS: Record<string, string> = {
+  deletion: 'Restrict deletions',
+  non_fast_forward: 'Block force pushes',
+  required_signatures: 'Require signed commits',
+  pull_request: 'Require a pull request before merging',
+  required_status_checks: 'Require status checks to pass',
+  required_linear_history: 'Require linear history',
+  merge_queue: 'Require merge queue',
+  workflows: 'Require workflows to pass',
+  code_scanning: 'Require code scanning results',
+  creation: 'Restrict creations',
+  update: 'Restrict updates',
+  required_deployments: 'Require deployments to succeed',
+}
+
+const PULL_REQUEST_PARAM_LABELS: Record<string, string> = {
+  required_approving_review_count: 'Required approvals',
+  dismiss_stale_reviews_on_push: 'Dismiss stale reviews on push',
+  require_code_owner_review: 'Require review from Code Owners',
+  require_last_push_approval: 'Require approval of the most recent reviewable push',
+}
+
+// Returns [dt_label, dd_html] -- dt_label is the human-readable label; dd_html may contain HTML
+// entities and must not be re-escaped by the caller.
+function settingsViolationParts(v: SettingsViolation): [string, string] {
+  const label = SETTINGS_LABELS[v.key] ?? v.key
+  const action = v.got === false ? 'enable' : 'disable'
+  return [label, action]
+}
+
+function ruleViolationParts(rule: string, action: 'add' | 'remove', rulesetName: string): [string, string] {
+  const label = RULESET_RULE_LABELS[rule] ?? rule
+  return [label, `${action} in ruleset:${esc(rulesetName)}`]
+}
+
+function paramViolationParts(pv: RulesetParameterViolation, rulesetName: string): [string, string] {
+  const paramLabel = pv.rule === 'pull_request' ? (PULL_REQUEST_PARAM_LABELS[pv.param] ?? pv.param) : pv.param
+  if (pv.expected === true) {
+    return [paramLabel, `enable in ruleset:${esc(rulesetName)}`]
+  }
+  const expectedStr = String(pv.expected)
+  return [paramLabel, `set to ${esc(expectedStr)} in ruleset:${esc(rulesetName)} (currently ${esc(String(pv.got))})`]
 }

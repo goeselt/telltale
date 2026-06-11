@@ -15,14 +15,24 @@ export async function collectRulesets(
     const activeBranch = rulesets.filter(
       (r) => r.enforcement === 'active' && (r.target === 'branch' || r.target == null),
     )
+    const evaluateBranch = rulesets.filter(
+      (r) => r.enforcement === 'evaluate' && (r.target === 'branch' || r.target == null),
+    )
 
     const named_rules: Record<string, string[]> = {}
+    const named_rule_parameters: Record<string, Record<string, Record<string, unknown>>> = {}
     const fetchNames = new Set(ruleDetailNames)
     const toFetch = activeBranch.filter((r) => fetchNames.has(r.name))
     await Promise.all(
       toFetch.map(async (r) => {
         const detail = await client.getRuleset(owner, repo, r.id).catch(() => null)
         named_rules[r.name] = detail?.rules.map((rule) => rule.type) ?? []
+        named_rule_parameters[r.name] = {}
+        for (const rule of detail?.rules ?? []) {
+          if (rule.parameters && Object.keys(rule.parameters).length > 0) {
+            named_rule_parameters[r.name][rule.type] = rule.parameters
+          }
+        }
       }),
     )
 
@@ -31,7 +41,9 @@ export async function collectRulesets(
       data: {
         status: 'ok',
         active_branch_ruleset_names: activeBranch.map((r) => r.name),
+        evaluate_branch_ruleset_names: evaluateBranch.map((r) => r.name),
         named_rules,
+        named_rule_parameters,
       },
     }
   } catch (err) {

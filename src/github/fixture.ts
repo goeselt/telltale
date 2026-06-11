@@ -60,6 +60,14 @@ export class FixtureClient implements GitHubClient {
       allow_squash_merge: d.allow_squash_merge as boolean | undefined,
       allow_merge_commit: d.allow_merge_commit as boolean | undefined,
       allow_rebase_merge: d.allow_rebase_merge as boolean | undefined,
+      pull_request_creation_policy: d.pull_request_creation_policy as string | undefined,
+      secret_scanning_enabled: (d.secret_scanning_enabled as boolean | undefined) ?? false,
+      secret_scanning_push_protection_enabled:
+        (d.secret_scanning_push_protection_enabled as boolean | undefined) ?? false,
+      web_commit_signoff_required: (d.web_commit_signoff_required as boolean | undefined) ?? false,
+      allow_forking: (d.allow_forking as boolean | undefined) ?? true,
+      allow_update_branch: (d.allow_update_branch as boolean | undefined) ?? false,
+      dependabot_security_updates_enabled: (d.dependabot_security_updates_enabled as boolean | undefined) ?? false,
     }
   }
 
@@ -117,7 +125,13 @@ export class FixtureClient implements GitHubClient {
     const d = await this.loadOptional<Record<string, unknown>>(owner, repo, `ruleset-${id}.json`)
     if (!d) return null
     const rules = (d.rules as Array<Record<string, unknown>> | undefined) ?? []
-    return { id: (d.id as number | undefined) ?? id, rules: rules.map((r) => ({ type: r.type as string })) }
+    return {
+      id: (d.id as number | undefined) ?? id,
+      rules: rules.map((r) => ({
+        type: r.type as string,
+        parameters: r.parameters as Record<string, unknown> | undefined,
+      })),
+    }
   }
 
   async listRulesets(owner: string, repo: string): Promise<GitHubRuleset[]> {
@@ -153,6 +167,14 @@ export class FixtureClient implements GitHubClient {
         allow_squash_merge: d.allow_squash_merge as boolean | undefined,
         allow_merge_commit: d.allow_merge_commit as boolean | undefined,
         allow_rebase_merge: d.allow_rebase_merge as boolean | undefined,
+        pull_request_creation_policy: d.pull_request_creation_policy as string | undefined,
+        secret_scanning_enabled: (d.secret_scanning_enabled as boolean | undefined) ?? false,
+        secret_scanning_push_protection_enabled:
+          (d.secret_scanning_push_protection_enabled as boolean | undefined) ?? false,
+        web_commit_signoff_required: (d.web_commit_signoff_required as boolean | undefined) ?? false,
+        allow_forking: (d.allow_forking as boolean | undefined) ?? true,
+        allow_update_branch: (d.allow_update_branch as boolean | undefined) ?? false,
+        dependabot_security_updates_enabled: (d.dependabot_security_updates_enabled as boolean | undefined) ?? false,
       }
     })
   }

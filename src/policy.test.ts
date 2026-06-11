@@ -25,6 +25,7 @@ function makeSnap(overrides: Partial<RepositorySnapshot> = {}): RepositorySnapsh
       rulesets: 'not_applicable',
       rulesets_missing: [],
       rulesets_violations: [],
+      rulesets_evaluate_mode: [],
       security_findings: 'not_applicable',
       overall: 'ok',
     },
@@ -52,6 +53,13 @@ test('settings: all required fields present and correct --> ok', () => {
       allow_squash_merge: true,
       allow_merge_commit: false,
       allow_rebase_merge: false,
+      allow_all_pr_creation: false,
+      secret_scanning_enabled: false,
+      secret_scanning_push_protection_enabled: false,
+      web_commit_signoff_required: false,
+      allow_forking: true,
+      allow_update_branch: false,
+      dependabot_security_updates_enabled: false,
     },
   })
   const result = evaluatePolicy(snap, defaultPolicy)
@@ -69,6 +77,13 @@ test('settings: required field missing --> failed', () => {
       allow_squash_merge: true,
       allow_merge_commit: false,
       allow_rebase_merge: false,
+      allow_all_pr_creation: false,
+      secret_scanning_enabled: false,
+      secret_scanning_push_protection_enabled: false,
+      web_commit_signoff_required: false,
+      allow_forking: true,
+      allow_update_branch: false,
+      dependabot_security_updates_enabled: false,
     },
   })
   const result = evaluatePolicy(snap, defaultPolicy)
@@ -86,6 +101,13 @@ test('settings: forbidden field enabled --> failed', () => {
       allow_squash_merge: true,
       allow_merge_commit: false,
       allow_rebase_merge: false,
+      allow_all_pr_creation: false,
+      secret_scanning_enabled: false,
+      secret_scanning_push_protection_enabled: false,
+      web_commit_signoff_required: false,
+      allow_forking: true,
+      allow_update_branch: false,
+      dependabot_security_updates_enabled: false,
     },
   })
   const result = evaluatePolicy(snap, defaultPolicy)
@@ -162,9 +184,15 @@ test('release: found --> ok', () => {
   assert.equal(result.release, 'ok')
 })
 
-test('release: not_found and not required --> warning', () => {
+test('release: not_found and required: false --> ok', () => {
   const snap = makeSnap({ release: { status: 'not_found' } })
   const result = evaluatePolicy(snap, defaultPolicy)
+  assert.equal(result.release, 'ok')
+})
+
+test('release: not_found without explicit required policy --> warning', () => {
+  const snap = makeSnap({ release: { status: 'not_found' } })
+  const result = evaluatePolicy(snap, { latest_release: {} })
   assert.equal(result.release, 'warning')
 })
 
@@ -293,6 +321,13 @@ test('overall rollup: any failed --> overall failed', () => {
       allow_squash_merge: true,
       allow_merge_commit: false,
       allow_rebase_merge: false,
+      allow_all_pr_creation: false,
+      secret_scanning_enabled: false,
+      secret_scanning_push_protection_enabled: false,
+      web_commit_signoff_required: false,
+      allow_forking: true,
+      allow_update_branch: false,
+      dependabot_security_updates_enabled: false,
     },
     pull_requests: { open_count: 0, dependabot_count: 0, items: [] },
   })
@@ -309,7 +344,8 @@ test('overall rollup: only warnings --> overall warning', () => {
     },
     release: { status: 'not_found' },
   })
-  const result = evaluatePolicy(snap, defaultPolicy)
+  // latest_release: {} has no `required` field, so not_found produces warning (not failed/ok)
+  const result = evaluatePolicy(snap, { ...defaultPolicy, latest_release: {} })
   assert.equal(result.overall, 'warning')
 })
 
@@ -385,4 +421,142 @@ test('security_findings: warning included in overall rollup', () => {
   const result = evaluatePolicy(snap, defaultPolicy)
   assert.equal(result.security_findings, 'warning')
   assert.equal(result.overall, 'warning')
+})
+
+// --- repository: allowed_visibility ---
+
+test('repository: allowed_visibility allows matching visibility --> ok', () => {
+  const snap = makeSnap({ visibility: 'public' })
+  const result = evaluatePolicy(snap, { repository: { allowed_visibility: ['public', 'private'] } })
+  assert.equal(result.repository, 'ok')
+})
+
+test('repository: allowed_visibility blocks non-matching visibility --> failed', () => {
+  const snap = makeSnap({ visibility: 'public' })
+  const result = evaluatePolicy(snap, { repository: { allowed_visibility: ['private'] } })
+  assert.equal(result.repository, 'failed')
+  assert.equal(result.overall, 'failed')
+})
+
+test('repository: only allowed_default_branches still works without allowed_visibility', () => {
+  const snap = makeSnap({ default_branch: 'master' })
+  const result = evaluatePolicy(snap, { repository: { allowed_default_branches: ['main'] } })
+  assert.equal(result.repository, 'failed')
+})
+
+// --- rulesets: evaluate mode ---
+
+test('rulesets: required ruleset present and active --> ok', () => {
+  const snap = makeSnap({
+    rulesets: {
+      status: 'ok',
+      active_branch_ruleset_names: ['main'],
+      evaluate_branch_ruleset_names: [],
+      named_rules: {},
+      named_rule_parameters: {},
+    },
+  })
+  const result = evaluatePolicy(snap, { rulesets: { required_names: ['main'] } })
+  assert.equal(result.rulesets, 'ok')
+})
+
+test('rulesets: required ruleset in evaluate mode --> warning', () => {
+  const snap = makeSnap({
+    rulesets: {
+      status: 'ok',
+      active_branch_ruleset_names: [],
+      evaluate_branch_ruleset_names: ['main'],
+      named_rules: {},
+      named_rule_parameters: {},
+    },
+  })
+  const result = evaluatePolicy(snap, { rulesets: { required_names: ['main'] } })
+  assert.equal(result.rulesets, 'warning')
+  assert.deepEqual(result.rulesets_evaluate_mode, ['main'])
+  assert.deepEqual(result.rulesets_missing, [])
+})
+
+test('rulesets: required ruleset completely absent --> failed', () => {
+  const snap = makeSnap({
+    rulesets: {
+      status: 'ok',
+      active_branch_ruleset_names: [],
+      evaluate_branch_ruleset_names: [],
+      named_rules: {},
+      named_rule_parameters: {},
+    },
+  })
+  const result = evaluatePolicy(snap, { rulesets: { required_names: ['main'] } })
+  assert.equal(result.rulesets, 'failed')
+  assert.deepEqual(result.rulesets_missing, ['main'])
+})
+
+// --- rulesets: pull_request parameter violations ---
+
+test('rulesets: pull_request required_approving_review_count met --> ok', () => {
+  const snap = makeSnap({
+    rulesets: {
+      status: 'ok',
+      active_branch_ruleset_names: ['main'],
+      evaluate_branch_ruleset_names: [],
+      named_rules: { main: ['pull_request'] },
+      named_rule_parameters: { main: { pull_request: { required_approving_review_count: 1 } } },
+    },
+  })
+  const result = evaluatePolicy(snap, {
+    rulesets: {
+      required_names: ['main'],
+      ruleset_rules: {
+        main: { required_rules: ['pull_request'], pull_request: { required_approving_review_count: 1 } },
+      },
+    },
+  })
+  assert.equal(result.rulesets, 'ok')
+  assert.equal(result.rulesets_violations.length, 0)
+})
+
+test('rulesets: pull_request required_approving_review_count too low --> failed', () => {
+  const snap = makeSnap({
+    rulesets: {
+      status: 'ok',
+      active_branch_ruleset_names: ['main'],
+      evaluate_branch_ruleset_names: [],
+      named_rules: { main: ['pull_request'] },
+      named_rule_parameters: { main: { pull_request: { required_approving_review_count: 0 } } },
+    },
+  })
+  const result = evaluatePolicy(snap, {
+    rulesets: {
+      required_names: ['main'],
+      ruleset_rules: {
+        main: { required_rules: ['pull_request'], pull_request: { required_approving_review_count: 1 } },
+      },
+    },
+  })
+  assert.equal(result.rulesets, 'failed')
+  assert.equal(result.rulesets_violations.length, 1)
+  assert.equal(result.rulesets_violations[0]!.parameter_violations.length, 1)
+  assert.equal(result.rulesets_violations[0]!.parameter_violations[0]!.param, 'required_approving_review_count')
+})
+
+test('rulesets: pull_request dismiss_stale_reviews not set when required --> failed', () => {
+  const snap = makeSnap({
+    rulesets: {
+      status: 'ok',
+      active_branch_ruleset_names: ['main'],
+      evaluate_branch_ruleset_names: [],
+      named_rules: { main: ['pull_request'] },
+      named_rule_parameters: { main: { pull_request: { dismiss_stale_reviews_on_push: false } } },
+    },
+  })
+  const result = evaluatePolicy(snap, {
+    rulesets: {
+      required_names: ['main'],
+      ruleset_rules: {
+        main: { required_rules: ['pull_request'], pull_request: { dismiss_stale_reviews_on_push: true } },
+      },
+    },
+  })
+  assert.equal(result.rulesets, 'failed')
+  assert.equal(result.rulesets_violations[0]!.parameter_violations[0]!.param, 'dismiss_stale_reviews_on_push')
 })

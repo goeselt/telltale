@@ -46,9 +46,17 @@ export interface ReleasePolicy {
   require_in_default_branch?: boolean
 }
 
+export interface PullRequestRulePolicy {
+  required_approving_review_count?: number
+  dismiss_stale_reviews_on_push?: boolean
+  require_code_owner_review?: boolean
+  require_last_push_approval?: boolean
+}
+
 export interface RulesetRulesPolicy {
   required_rules: string[]
   forbidden_rules?: string[]
+  pull_request?: PullRequestRulePolicy
 }
 
 export interface RulesetsPolicy {
@@ -58,6 +66,7 @@ export interface RulesetsPolicy {
 
 export interface RepositoryPolicy {
   allowed_default_branches?: string[]
+  allowed_visibility?: string[]
 }
 
 export interface PullRequestsPolicy {
@@ -83,9 +92,9 @@ export interface Config {
   profiles: Record<string, Profile>
 }
 
-export async function loadConfig(dir: string): Promise<Config> {
+export async function loadConfig(dir: string, reposFile?: string): Promise<Config> {
   const [reposRaw, profilesRaw] = await Promise.all([
-    readYaml(join(dir, 'repositories.yml')),
+    readYaml(reposFile ?? join(dir, 'repositories.yml')),
     readYaml(join(dir, 'profiles.yml')),
   ])
 

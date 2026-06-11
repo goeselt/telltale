@@ -1,0 +1,60 @@
+{
+  "total_count": 5,
+  "workflow_runs": [
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-10T10:00:00Z",
+      "updated_at": "2026-06-10T10:03:21Z",
+      "html_url": "https://github.com/goeselt/compliant/actions/runs/5001",
+      "head_sha": "c0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ff",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-09T14:30:00Z",
+      "updated_at": "2026-06-09T14:33:45Z",
+      "html_url": "https://github.com/goeselt/compliant/actions/runs/4990",
+      "head_sha": "aabbccdd",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-08T09:15:00Z",
+      "updated_at": "2026-06-08T09:18:12Z",
+      "html_url": "https://github.com/goeselt/compliant/actions/runs/4970",
+      "head_sha": "11223344",
+      "head_branch": "main",
+      "event": "push"
+    },
+    {
+      "name": "Release",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-01T09:05:00Z",
+      "updated_at": "2026-06-01T09:10:48Z",
+      "html_url": "https://github.com/goeselt/compliant/actions/runs/4800",
+      "head_sha": "v2.1.0abc",
+      "head_branch": "v2.1.0",
+      "event": "push"
+    },
+    {
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-05-31T16:00:00Z",
+      "updated_at": "2026-05-31T16:02:57Z",
+      "html_url": "https://github.com/goeselt/compliant/actions/runs/4780",
+      "head_sha": "99887766",
+      "head_branch": "main",
+      "event": "push"
+    }
+  ]
+}

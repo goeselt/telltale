@@ -24,6 +24,7 @@ function makeSnap(overrides: Partial<RepositorySnapshot> = {}): RepositorySnapsh
       rulesets: 'not_applicable',
       rulesets_missing: [],
       rulesets_violations: [],
+      rulesets_evaluate_mode: [],
       security_findings: 'not_applicable',
       overall: 'ok',
     },
@@ -98,7 +99,7 @@ test('renderDetail: public repo has explicit GitHub link', () => {
     },
   })
   const out = renderDetail(snap)
-  assert.match(out, /\(github\.com\)/)
+  assert.match(out, /&#x2197;/)
   assert.match(out, /https:\/\/github\.com\/owner\/repo/)
 })
 
@@ -143,6 +144,7 @@ test('renderDetail: shows PR count', () => {
       rulesets: 'not_applicable',
       rulesets_missing: [],
       rulesets_violations: [],
+      rulesets_evaluate_mode: [],
       security_findings: 'not_applicable',
       overall: 'ok',
     },
@@ -166,6 +168,7 @@ test('renderDetail: no open PRs shows ok', () => {
       rulesets: 'not_applicable',
       rulesets_missing: [],
       rulesets_violations: [],
+      rulesets_evaluate_mode: [],
       security_findings: 'not_applicable',
       overall: 'ok',
     },
@@ -214,6 +217,7 @@ test('renderDetail: shows open issues count', () => {
       rulesets: 'not_applicable',
       rulesets_missing: [],
       rulesets_violations: [],
+      rulesets_evaluate_mode: [],
       security_findings: 'not_applicable',
       overall: 'ok',
     },
@@ -243,6 +247,7 @@ test('renderDetail: security findings warning shown', () => {
       rulesets: 'not_applicable',
       rulesets_missing: [],
       rulesets_violations: [],
+      rulesets_evaluate_mode: [],
       security_findings: 'warning',
       overall: 'warning',
     },
@@ -266,6 +271,7 @@ test('renderDetail: security findings not configured shown as informational', ()
       rulesets: 'not_applicable',
       rulesets_missing: [],
       rulesets_violations: [],
+      rulesets_evaluate_mode: [],
       security_findings: 'not_applicable',
       overall: 'ok',
     },
@@ -273,6 +279,91 @@ test('renderDetail: security findings not configured shown as informational', ()
   const out = renderDetail(snap)
   assert.match(out, /Security Findings/)
   assert.match(out, /not configured/)
+})
+
+test('renderDetail: settings violations show actionable labels', () => {
+  const snap = makeSnap({
+    settings: {
+      has_issues: true,
+      has_projects: false,
+      has_wiki: true,
+      allow_auto_merge: false,
+      delete_branch_on_merge: false,
+      allow_squash_merge: true,
+      allow_merge_commit: false,
+      allow_rebase_merge: false,
+      allow_all_pr_creation: false,
+      secret_scanning_enabled: false,
+      secret_scanning_push_protection_enabled: false,
+      web_commit_signoff_required: false,
+      allow_forking: true,
+      allow_update_branch: false,
+      dependabot_security_updates_enabled: false,
+    },
+    policy: {
+      repository: 'not_applicable',
+      settings: 'failed',
+      settings_violations: [
+        { key: 'delete_branch_on_merge', got: false, issue: 'required_not_met' },
+        { key: 'allow_auto_merge', got: false, issue: 'required_not_met' },
+        { key: 'has_wiki', got: true, issue: 'forbidden_enabled' },
+      ],
+      pull_requests: 'not_applicable',
+      issues: 'not_applicable',
+      release: 'not_applicable',
+      workflow_health: 'not_applicable',
+      rulesets: 'not_applicable',
+      rulesets_missing: [],
+      rulesets_violations: [],
+      rulesets_evaluate_mode: [],
+      security_findings: 'not_applicable',
+      overall: 'failed',
+    },
+  })
+  const out = renderDetail(snap)
+  assert.match(out, /Automatically delete head branches.*enable/)
+  assert.match(out, /Allow auto-merge.*enable/)
+  assert.match(out, /Wikis.*disable/)
+})
+
+test('renderDetail: ruleset violations show actionable labels', () => {
+  const snap = makeSnap({
+    rulesets: {
+      status: 'ok',
+      active_branch_ruleset_names: ['main'],
+      evaluate_branch_ruleset_names: [],
+      named_rules: { main: ['pull_request'] },
+      named_rule_parameters: { main: { pull_request: { required_approving_review_count: 0 } } },
+    },
+    policy: {
+      repository: 'not_applicable',
+      settings: 'not_applicable',
+      settings_violations: [],
+      pull_requests: 'not_applicable',
+      issues: 'not_applicable',
+      release: 'not_applicable',
+      workflow_health: 'not_applicable',
+      rulesets: 'failed',
+      rulesets_missing: [],
+      rulesets_violations: [
+        {
+          ruleset: 'main',
+          missing_rules: ['deletion'],
+          forbidden_rules: ['merge_queue'],
+          parameter_violations: [
+            { rule: 'pull_request', param: 'required_approving_review_count', expected: '>=1', got: 0 },
+          ],
+        },
+      ],
+      rulesets_evaluate_mode: [],
+      security_findings: 'not_applicable',
+      overall: 'failed',
+    },
+  })
+  const out = renderDetail(snap)
+  assert.match(out, /Restrict deletions.*add.*in ruleset:main/)
+  assert.match(out, /Require merge queue.*remove.*in ruleset:main/)
+  assert.match(out, /Required approvals.*&gt;=1.*in ruleset:main.*currently 0/)
 })
 
 test('renderDetail: failed workflow shows run name', () => {
@@ -305,6 +396,7 @@ test('renderDetail: failed workflow shows run name', () => {
       rulesets: 'not_applicable',
       rulesets_missing: [],
       rulesets_violations: [],
+      rulesets_evaluate_mode: [],
       security_findings: 'not_applicable',
       overall: 'failed',
     },

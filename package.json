@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "report": "node --env-file-if-exists .env --import tsx src/index.ts",
-    "report:fixtures": "node --env-file-if-exists .env --import tsx src/index.ts --fixtures fixtures/",
+    "report:fixtures": "node --env-file-if-exists .env --import tsx src/index.ts --fixtures fixtures/ --repos fixtures/config/repositories.yml",
     "test": "node --import tsx --test src/*.test.ts",
     "lint": "tsc --noEmit"
   },

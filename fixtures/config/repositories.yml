@@ -1,0 +1,20 @@
+---
+groups:
+  - name: personal
+    profile: personal-repositories
+    repositories:
+      - goeselt/compliant
+      - goeselt/actionary
+      - goeselt/culprit
+      - goeselt/settings-fail
+      - goeselt/ruleset-violations
+      - goeselt/evaluate-mode
+      - goeselt/security-alerts
+      - goeselt/workflow-fails
+    expose_private_names: true
+
+  - name: external
+    profile: release-watch
+    repositories:
+      - actions/checkout
+    expose_private_names: false
