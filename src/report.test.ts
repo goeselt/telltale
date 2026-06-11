@@ -99,7 +99,7 @@ test('renderDetail: public repo has explicit GitHub link', () => {
     },
   })
   const out = renderDetail(snap)
-  assert.match(out, /\(github\.com\)/)
+  assert.match(out, /&#x2197;/)
   assert.match(out, /https:\/\/github\.com\/owner\/repo/)
 })
 

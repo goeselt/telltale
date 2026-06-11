@@ -15,6 +15,7 @@ const ICON_LOCK = '\u{1F512}'
 const ICON_TIMER = '\u23F1\uFE0F'
 const ICON_PENDING = '\u23F3'
 const ICON_QUESTION = '\u2753'
+const ICON_EXTERNAL = '&#x2197;'
 
 const STATUS_ICON: Record<ProbeStatus, string> = {
   ok: ICON_OK,
@@ -32,7 +33,7 @@ body{
   padding:24px 16px 48px
 }
 .container{max-width:1100px;margin:0 auto}
-a{color:#0969da}
+a{color:#0969da;text-decoration:none}
 
 /* header */
 h1{font-size:1.4rem;font-weight:700;margin-bottom:4px}
@@ -329,7 +330,7 @@ function infoBlock(snap: RepositorySnapshot): string {
   const descContent = rawDesc ? esc(rawDesc) : '<em>no description</em>'
   if (canLink) {
     parts.push(
-      `<blockquote class="desc">${descContent} <a href="https://github.com/${snap.full_name}">(github.com)</a></blockquote>`,
+      `<blockquote class="desc">${descContent} <a href="https://github.com/${snap.full_name}" title="Open on GitHub">${ICON_EXTERNAL}</a></blockquote>`,
     )
   } else {
     parts.push(`<blockquote class="desc">${descContent}</blockquote>`)
