@@ -120,7 +120,9 @@ function evalRelease(snap: RepositorySnapshot, policy: ReleasePolicy | undefined
     return 'not_applicable'
   }
   if (snap.release.status === 'not_found') {
-    return (policy?.required ?? false) ? 'failed' : 'warning'
+    if (policy?.required === true) return 'failed'
+    if (policy?.required === false) return 'ok'
+    return 'warning'
   }
   // Tag commit not reachable from the default branch -- tag was likely force-pushed/moved.
   if (policy?.require_in_default_branch && snap.release.in_default_branch === false) {

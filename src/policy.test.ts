@@ -184,9 +184,15 @@ test('release: found --> ok', () => {
   assert.equal(result.release, 'ok')
 })
 
-test('release: not_found and not required --> warning', () => {
+test('release: not_found and required: false --> ok', () => {
   const snap = makeSnap({ release: { status: 'not_found' } })
   const result = evaluatePolicy(snap, defaultPolicy)
+  assert.equal(result.release, 'ok')
+})
+
+test('release: not_found without explicit required policy --> warning', () => {
+  const snap = makeSnap({ release: { status: 'not_found' } })
+  const result = evaluatePolicy(snap, { latest_release: {} })
   assert.equal(result.release, 'warning')
 })
 
@@ -338,7 +344,8 @@ test('overall rollup: only warnings --> overall warning', () => {
     },
     release: { status: 'not_found' },
   })
-  const result = evaluatePolicy(snap, defaultPolicy)
+  // latest_release: {} has no `required` field, so not_found produces warning (not failed/ok)
+  const result = evaluatePolicy(snap, { ...defaultPolicy, latest_release: {} })
   assert.equal(result.overall, 'warning')
 })
 
